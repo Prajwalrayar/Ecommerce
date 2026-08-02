@@ -324,8 +324,43 @@ public class AuthenticationService {
 
         Address address = createAddress();
 
-        Customer customer = new Customer(IdGenerator.generateId("CUS"),
-                name, email, phone, password, address);
+//        Customer customer = new Customer(
+//                IdGenerator.generateId("CUS"),
+//                name,
+//                email,
+//                phone,
+//                password,
+//                address,
+//                0.00);
+
+        double walletBalance;
+        while (true) {
+            try {
+                walletBalance = InputUtil.readDouble("Enter Initial Wallet Balance : ");
+                if (walletBalance < 0) {
+                    throw new ValidationException("Wallet Balance Cannot Be Negative.");
+                }
+                break;
+            } catch (ValidationException exception) {
+                DisplayUtil.printMessage(exception.getMessage());
+            }
+
+        }
+        Customer customer = new Customer(
+
+                IdGenerator.generateId("CUS"),
+
+                name,
+
+                email,
+
+                phone,
+
+                password,
+
+                address,
+
+                walletBalance);
 
         DataStore.CUSTOMERS.put(
                 customer.getUserId(),

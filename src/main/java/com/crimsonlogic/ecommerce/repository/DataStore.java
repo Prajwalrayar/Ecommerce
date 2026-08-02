@@ -60,6 +60,12 @@ public final class DataStore {
             new LinkedHashMap<>();
 
     /**
+     * Stores all Payments.
+     */
+    public static final Map<String, Payment> PAYMENTS =
+            new LinkedHashMap<>();
+
+    /**
      * Loads default data.
      */
     static {

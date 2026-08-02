@@ -3,6 +3,7 @@ package com.crimsonlogic.ecommerce.handler;
 import com.crimsonlogic.ecommerce.model.Admin;
 import com.crimsonlogic.ecommerce.service.AdminService;
 import com.crimsonlogic.ecommerce.service.CategoryService;
+import com.crimsonlogic.ecommerce.service.PaymentService;
 import com.crimsonlogic.ecommerce.service.ProductService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -18,6 +19,7 @@ public class AdminMenuHandler {
 
     private final ProductMenuHandler productMenuHandler;
     private final OrderMenuHandler orderMenuHandler;
+    private final PaymentService paymentService;
 
     /**
      * Parameterized Constructor.
@@ -29,6 +31,7 @@ public class AdminMenuHandler {
         this.categoryMenuHandler = new CategoryMenuHandler(new CategoryService());
         this.productMenuHandler = new ProductMenuHandler(new ProductService());
         this.orderMenuHandler = new OrderMenuHandler();
+        this.paymentService = new PaymentService();
     }
 
     /**
@@ -79,6 +82,11 @@ public class AdminMenuHandler {
                     orderMenuHandler.showMenu();
 
                     break;
+                case "payments":
+
+                    showPaymentMenu();
+
+                    break;
 
                 case "delete customer":
 
@@ -126,6 +134,7 @@ public class AdminMenuHandler {
         System.out.println("CATEGORIES");
         System.out.println("PRODUCTS");
         System.out.println("ORDERS");
+        System.out.println("PAYMENTS");
         System.out.println("DELETE CUSTOMER");
         System.out.println("DELETE SELLER");
         System.out.println("LOGOUT");
@@ -175,6 +184,65 @@ public class AdminMenuHandler {
                         "Enter Seller ID : ");
 
         adminService.deleteSeller(sellerId);
+
+    }
+
+    private void showPaymentMenu() {
+
+        boolean back = false;
+
+        while (!back) {
+
+            System.out.println("\n==========================================");
+            System.out.println("            PAYMENT MENU");
+            System.out.println("==========================================");
+            System.out.println("VIEW");
+            System.out.println("SEARCH");
+            System.out.println("REFUND");
+            System.out.println("BACK");
+            System.out.println("==========================================");
+
+            String choice =
+                    InputUtil.readString(
+                                    "Enter Choice : ")
+                            .trim()
+                            .toLowerCase();
+
+            switch (choice) {
+
+                case "view":
+
+                    paymentService.viewAllPayments();
+
+                    break;
+
+                case "search":
+
+                    paymentService.searchPayment();
+
+                    break;
+
+                case "refund":
+
+                    paymentService.refundPayment();
+
+                    break;
+
+                case "back":
+
+                    back = true;
+
+                    break;
+
+                default:
+
+                    DisplayUtil.printInvalidChoice();
+
+                    back = true;
+
+            }
+
+        }
 
     }
 

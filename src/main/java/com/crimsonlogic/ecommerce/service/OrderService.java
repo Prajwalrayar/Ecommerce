@@ -1,12 +1,9 @@
 package com.crimsonlogic.ecommerce.service;
 
 import com.crimsonlogic.ecommerce.enums.OrderStatus;
-import com.crimsonlogic.ecommerce.model.Cart;
-import com.crimsonlogic.ecommerce.model.Customer;
-import com.crimsonlogic.ecommerce.model.Inventory;
-import com.crimsonlogic.ecommerce.model.Order;
-import com.crimsonlogic.ecommerce.model.Product;
-import com.crimsonlogic.ecommerce.model.Seller;
+import com.crimsonlogic.ecommerce.enums.PaymentMethod;
+import com.crimsonlogic.ecommerce.enums.PaymentStatus;
+import com.crimsonlogic.ecommerce.model.*;
 import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
@@ -652,6 +649,33 @@ public class OrderService {
 
         }
 
+        Payment payment =
+                getPaymentByOrder(order);
+
+        if (payment == null) {
+
+            DisplayUtil.printMessage(
+                    "Payment Pending.");
+
+            return;
+
+        }
+
+        if (payment.getPaymentStatus()
+                != PaymentStatus.SUCCESS
+
+                &&
+
+                payment.getPaymentMethod()
+                        != PaymentMethod.CASH_ON_DELIVERY) {
+
+            DisplayUtil.printMessage(
+                    "Payment Not Completed.");
+
+            return;
+
+        }
+
         order.setOrderStatus(
                 OrderStatus.CONFIRMED);
 
@@ -1126,6 +1150,29 @@ public class OrderService {
                 },
 
                 buildAdminOrderRows(orders));
+
+    }
+
+    /**
+     * Returns Payment of an Order.
+     *
+     * @param order Order
+     * @return Payment
+     */
+    private Payment getPaymentByOrder(
+            Order order) {
+
+        return DataStore.PAYMENTS.values()
+
+                .stream()
+
+                .filter(payment ->
+                        payment.getOrder()
+                                .equals(order))
+
+                .findFirst()
+
+                .orElse(null);
 
     }
 
