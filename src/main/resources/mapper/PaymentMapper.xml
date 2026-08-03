@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.PaymentMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="PaymentResultMap"
+               type="com.crimsonlogic.ecommerce.model.Payment">
+
+        <id property="paymentId"
+            column="payment_id"/>
+
+        <result property="utrNumber"
+                column="utr_number"/>
+
+        <result property="paymentMethod"
+                column="payment_method"/>
+
+        <result property="paymentStatus"
+                column="payment_status"/>
+
+        <result property="amount"
+                column="amount"/>
+
+        <result property="upiId"
+                column="upi_id"/>
+
+        <result property="paymentDate"
+                column="payment_date"/>
+
+        <!-- Customer -->
+
+        <association property="customer"
+                     javaType="com.crimsonlogic.ecommerce.model.Customer">
+
+            <id property="userId"
+                column="customer_id"/>
+
+            <result property="userName"
+                    column="customer_name"/>
+
+            <result property="userEmail"
+                    column="customer_email"/>
+
+            <result property="userPhNo"
+                    column="customer_phone"/>
+
+            <result property="walletBalance"
+                    column="wallet_balance"/>
+
+        </association>
+
+        <!-- Order -->
+
+        <association property="order"
+                     javaType="com.crimsonlogic.ecommerce.model.Order">
+
+            <id property="orderId"
+                column="order_id"/>
+
+            <result property="quantity"
+                    column="quantity"/>
+
+            <result property="totalPrice"
+                    column="total_price"/>
+
+            <result property="orderStatus"
+                    column="order_status"/>
+
+            <result property="orderDate"
+                    column="order_date"/>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertPayment">
+
+        INSERT INTO payments(
+
+        payment_id,
+
+        utr_number,
+
+        user_id,
+
+        order_id,
+
+        payment_method,
+
+        payment_status,
+
+        amount,
+
+        upi_id,
+
+        payment_date
+
+        )
+
+        VALUES(
+
+        #{paymentId},
+
+        #{utrNumber},
+
+        #{customer.userId},
+
+        #{order.orderId},
+
+        #{paymentMethod},
+
+        #{paymentStatus},
+
+        #{amount},
+
+        #{upiId},
+
+        #{paymentDate}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updatePayment">
+
+        UPDATE payments
+
+        SET
+
+        utr_number=#{utrNumber},
+
+        payment_method=#{paymentMethod},
+
+        payment_status=#{paymentStatus},
+
+        amount=#{amount},
+
+        upi_id=#{upiId}
+
+        WHERE payment_id=#{paymentId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Update Payment Status -->
+    <!-- ===================================================== -->
+
+    <update id="updatePaymentStatus">
+
+        UPDATE payments
+
+        SET
+
+        payment_status=#{paymentStatus}
+
+        WHERE payment_id=#{paymentId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deletePayment">
+
+        DELETE
+
+        FROM payments
+
+        WHERE payment_id=#{paymentId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By Payment ID -->
+    <!-- ===================================================== -->
+
+    <select id="findPaymentById"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        WHERE p.payment_id=#{paymentId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By UTR -->
+    <!-- ===================================================== -->
+
+    <select id="findPaymentByUtr"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        WHERE p.utr_number=#{utrNumber}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Payment By Order -->
+    <!-- ===================================================== -->
+
+    <select id="findPaymentByOrder"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        WHERE p.order_id=#{orderId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Payments By Customer -->
+    <!-- ===================================================== -->
+
+    <select id="findPaymentsByCustomer"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        WHERE p.user_id=#{customerId}
+
+        ORDER BY p.payment_date DESC
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Payments By Seller -->
+    <!-- ===================================================== -->
+
+    <select id="findPaymentsBySeller"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        INNER JOIN products pr
+        ON o.product_id=pr.product_id
+
+        WHERE pr.user_id=#{sellerId}
+
+        ORDER BY p.payment_date DESC
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All Payments -->
+    <!-- ===================================================== -->
+
+    <select id="findAllPayments"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id=c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id=o.order_id
+
+        ORDER BY p.payment_date DESC
+
+    </select>
+
+    <select id="findPaymentsByCustomerAndKeyword"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id = c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id = o.order_id
+
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE p.user_id = #{customerId}
+
+        AND (
+
+        LOWER(pr.product_name)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR
+
+        LOWER(p.utr_number)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        )
+
+    </select>
+
+    <select id="findPaymentsBySellerAndKeyword"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id = c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id = o.order_id
+
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE pr.user_id = #{sellerId}
+
+        AND (
+
+        LOWER(c.user_name)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR
+
+        LOWER(pr.product_name)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR
+
+        LOWER(p.utr_number)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        )
+
+    </select>
+
+    <select id="findPaymentsByKeyword"
+            resultMap="PaymentResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        o.quantity,
+        o.total_price,
+        o.order_status,
+        o.order_date
+
+        FROM payments p
+
+        INNER JOIN customers c
+        ON p.user_id = c.user_id
+
+        INNER JOIN orders o
+        ON p.order_id = o.order_id
+
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE
+
+        LOWER(c.user_name)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR
+
+        LOWER(pr.product_name)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR
+
+        LOWER(p.utr_number)
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+    </select>
+
+</mapper>

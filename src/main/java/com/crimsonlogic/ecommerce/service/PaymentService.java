@@ -1,7 +1,9 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CustomerDAO;
+import com.crimsonlogic.ecommerce.dao.OrderDAO;
+import com.crimsonlogic.ecommerce.dao.PaymentDAO;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.enums.OrderStatus;
 import com.crimsonlogic.ecommerce.enums.PaymentMethod;
 import com.crimsonlogic.ecommerce.enums.PaymentStatus;
@@ -14,25 +16,24 @@ import com.crimsonlogic.ecommerce.util.InputUtil;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 /**
  * Handles Payment operations.
  */
 public class PaymentService {
+    private final PaymentDAO paymentDAO = new PaymentDAO();
+    private final OrderDAO orderDAO = new OrderDAO();
+    private final CustomerDAO customerDAO = new CustomerDAO();
 
-    /**
-     * Default Constructor.
-     */
+    // Default Constructor.
+
     public PaymentService() {
 
     }
 
-    /**
-     * Makes Payment.
-     *
-     * @param customer Logged-in Customer
-     */
+    // Makes Payment.
     public void makePayment(Customer customer) {
 
         Order order =
@@ -121,50 +122,18 @@ public class PaymentService {
 
     }
 
-    /**
-     * Displays Customer Payments.
-     *
-     * @param customer Logged-in Customer
-     */
+    // Displays Customer Payments.
+
     public void viewPayments(Customer customer) {
 
-        if (!hasPayments(customer)) {
+        if (!validateCustomerPayments(customer)) {
 
-            DisplayUtil.printMessage(
-                    "No Payments Found.");
-
+            DisplayUtil.printMessage("No Payments Found.");
             return;
-
         }
+        List<Payment> payments = paymentDAO.findPaymentsByCustomer(customer.getUserId());
 
-        List<Payment> payments =
-                DataStore.PAYMENTS.values()
-                        .stream()
-                        .filter(payment ->
-                                payment.getCustomer()
-                                        .equals(customer))
-
-                        .toList();
-
-        DisplayUtil.printTable(
-
-                "PAYMENT HISTORY",
-
-                new String[]{
-
-                        "UTR Number",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildPaymentRows(payments));
+        displayCustomerPayments(payments, "PAYMENT HISTORY");
 
     }
 
@@ -175,7 +144,7 @@ public class PaymentService {
      */
     public void searchPayment(Customer customer) {
 
-        if (!hasPayments(customer)) {
+        if (!validateCustomerPayments(customer)) {
 
             DisplayUtil.printMessage(
                     "No Payments Found.");
@@ -183,21 +152,19 @@ public class PaymentService {
             return;
 
         }
-
-        String product =
-                InputUtil.readString("Enter Product Name / UTR Number :")
+        String keyword =
+                InputUtil.readString(
+                                "Enter Product Name / UTR Number : ")
                         .trim();
 
         List<Payment> payments =
-                DataStore.PAYMENTS.values()
-                        .stream()
-                        .filter(payment -> payment.getCustomer().equals(customer))
-                        .filter(payment -> payment.getOrder()
-                                .getProduct()
-                                .getProductName()
-                                .equalsIgnoreCase(product) || payment.getUtrNumber()
-                                .equalsIgnoreCase(product))
-                        .toList();
+                paymentDAO.findPaymentsByCustomerAndKeyword(
+
+                        customer.getUserId(),
+
+                        keyword
+
+                );
 
         if (payments.isEmpty()) {
 
@@ -207,35 +174,20 @@ public class PaymentService {
             return;
 
         }
+        displayCustomerPayments(
 
-        DisplayUtil.printTable(
+                payments,
 
-                "SEARCH RESULT",
+                "SEARCH RESULT"
 
-                new String[]{
-
-                        "UTR Number",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildPaymentRows(payments));
-
+        );
     }
     /**
      * Wallet Payment.
      */
     private void walletPayment(Customer customer, Order order) {
 
-        if (customer.getWalletBalance()
-                < order.getTotalPrice()) {
+        if (customer.getWalletBalance() < order.getTotalPrice()) {
 
             DisplayUtil.printMessage(
                     "Insufficient Wallet Balance.");
@@ -248,7 +200,12 @@ public class PaymentService {
 
                 customer.getWalletBalance()
 
-                        - order.getTotalPrice());
+                        - order.getTotalPrice()
+
+        );
+
+        customerDAO.updateCustomer(
+                customer);
 
         createPayment(
 
@@ -260,7 +217,9 @@ public class PaymentService {
 
                 PaymentStatus.SUCCESS,
 
-                null);
+                null
+
+        );
 
     }
 
@@ -418,35 +377,13 @@ public class PaymentService {
      * @param upiId UPI ID
      */
     private void createPayment(Customer customer, Order order,
-            PaymentMethod paymentMethod, PaymentStatus paymentStatus,
-                               String upiId) {
+            PaymentMethod paymentMethod, PaymentStatus paymentStatus, String upiId) {
 
-        Payment payment =
-                new Payment(
+        Payment payment = new Payment(IdGenerator.generateId("PAY"),
+                generateUtrNumber(), customer, order, paymentMethod,
+                paymentStatus, order.getTotalPrice(), upiId, LocalDateTime.now());
 
-                        IdGenerator.generateId("PAY"),
-
-                        generateUtrNumber(),
-
-                        customer,
-
-                        order,
-
-                        paymentMethod,
-
-                        paymentStatus,
-
-                        order.getTotalPrice(),
-
-                        upiId,
-
-                        LocalDateTime.now());
-
-        DataStore.PAYMENTS.put(
-                payment.getPaymentId(),
-                payment);
-
-        displayPayment(payment);
+        paymentDAO.insertPayment(payment);
 
         if (paymentMethod == PaymentMethod.CASH_ON_DELIVERY) {
 
@@ -459,8 +396,7 @@ public class PaymentService {
 
         } else {
 
-            DisplayUtil.printSuccess(
-                    "Payment Successful.");
+            DisplayUtil.printSuccess("Payment Successful.");
 
             displayPayment(payment);
 
@@ -483,42 +419,17 @@ public class PaymentService {
      */
     public void viewAllPayments() {
 
-        if (DataStore.PAYMENTS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Payments Found.");
-
+        if (!validatePayments()) {
             return;
-
         }
 
-        DisplayUtil.printTable(
+        displayAdminPayments(
 
-                "PAYMENT HISTORY",
+                paymentDAO.findAllPayments(),
 
-                new String[]{
+                "PAYMENT HISTORY"
 
-                        "UTR Number",
-
-                        "Customer",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildAdminPaymentRows(
-
-                        DataStore.PAYMENTS.values()
-
-                                .stream()
-
-                                .toList()));
+        );
 
     }
 
@@ -526,72 +437,20 @@ public class PaymentService {
      * Searches Payments.
      */
     public void searchPayment() {
-
-        if (DataStore.PAYMENTS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Payments Found.");
-
+        if (!validatePayments()) {
             return;
-
         }
 
-        String keyword =
-                InputUtil.readString(
-                                "Enter Customer/Product : ")
-                        .trim();
+        String keyword = InputUtil.readString("Enter Customer/Product : ").trim();
 
         List<Payment> payments =
-                DataStore.PAYMENTS.values()
-
-                        .stream()
-
-                        .filter(payment ->
-
-                                payment.getCustomer()
-                                        .getUserName()
-                                        .equalsIgnoreCase(keyword)
-
-                                        ||
-
-                                        payment.getOrder()
-                                                .getProduct()
-                                                .getProductName()
-                                                .equalsIgnoreCase(keyword))
-
-                        .toList();
+                paymentDAO.findPaymentsByKeyword(keyword);
 
         if (payments.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "Payment Not Found.");
-
+            DisplayUtil.printMessage("Payment Not Found.");
             return;
-
         }
-
-        DisplayUtil.printTable(
-
-                "SEARCH RESULT",
-
-                new String[]{
-
-                        "Payment ID",
-
-                        "Customer",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildAdminPaymentRows(payments));
-
+        displayAdminPayments(payments, "SEARCH RESULT");
     }
 
     /**
@@ -601,10 +460,7 @@ public class PaymentService {
      */
     private Payment getPaymentOrNull() {
 
-        if (DataStore.PAYMENTS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Payments Found.");
+        if (!validatePayments()) {
 
             return null;
 
@@ -616,21 +472,8 @@ public class PaymentService {
                         .trim();
 
         Payment payment =
-
-                DataStore.PAYMENTS.values()
-
-                        .stream()
-
-                        .filter(currentPayment ->
-
-                                currentPayment.getUtrNumber()
-
-                                        .equalsIgnoreCase(
-                                                utrNumber))
-
-                        .findFirst()
-
-                        .orElse(null);
+                paymentDAO.findPaymentByUtr(
+                        utrNumber);
 
         if (payment == null) {
 
@@ -681,6 +524,9 @@ public class PaymentService {
         payment.setPaymentStatus(
                 PaymentStatus.REFUNDED);
 
+        paymentDAO.updatePaymentStatus(
+                payment);
+
         if (payment.getPaymentMethod()
                 == PaymentMethod.WALLET) {
 
@@ -693,6 +539,9 @@ public class PaymentService {
 
                             + payment.getAmount());
 
+            customerDAO.updateCustomer(
+                    customer);
+
             DisplayUtil.printSuccess(
                     "Amount Credited To Wallet.");
 
@@ -702,23 +551,10 @@ public class PaymentService {
                 "Refund Successful.");
 
     }
-    /**
-     * Checks whether Customer has Payments.
-     *
-     * @param customer Logged-in Customer
-     * @return true if Payments exist
-     */
-    private boolean hasPayments(
-            Customer customer) {
 
-        return DataStore.PAYMENTS.values()
-
-                .stream()
-
-                .anyMatch(payment ->
-                        payment.getCustomer()
-                                .equals(customer));
-
+    // Checks whether Customer has Payments.
+    private boolean validateCustomerPayments(Customer customer) {
+        return !paymentDAO.findPaymentsByCustomer(customer.getUserId()).isEmpty();
     }
 
     /**
@@ -727,26 +563,10 @@ public class PaymentService {
      * @param customer Logged-in Customer
      * @return Order
      */
-    private Order getPendingOrder(
-            Customer customer) {
+    private Order getPendingOrder(Customer customer) {
 
-        List<Order> orders =
-                DataStore.ORDERS.values()
-
-                        .stream()
-
-                        .filter(order ->
-                                order.getCustomer()
-                                        .equals(customer))
-
-                        .filter(order ->
-                                order.getOrderStatus()
-                                        == OrderStatus.PLACED)
-
-                        .filter(order ->
-                                !paymentAlreadyExists(order))
-
-                        .toList();
+        List<Order> orders = orderDAO.findOrdersWithoutPayment(
+                        customer.getUserId());
 
         if (orders.isEmpty()) {
 
@@ -798,16 +618,9 @@ public class PaymentService {
      * @param order Order
      * @return true if Payment exists
      */
-    private boolean paymentAlreadyExists(
-            Order order) {
+    private boolean paymentAlreadyExists(Order order) {
 
-        return DataStore.PAYMENTS.values()
-
-                .stream()
-
-                .anyMatch(payment ->
-                        payment.getOrder()
-                                .equals(order));
+        return paymentDAO.findPaymentByOrder(order.getOrderId()) != null;
 
     }
 
@@ -818,16 +631,21 @@ public class PaymentService {
      */
     private String generateUtrNumber() {
 
-        long number =
-                java.util.concurrent.ThreadLocalRandom
+        String utr;
 
-                        .current()
+        do {
 
-                        .nextLong(
-                                100000000000L,
-                                1000000000000L);
+            long number =
+                    ThreadLocalRandom.current()
+                            .nextLong(
+                                    100000000000L,
+                                    1000000000000L);
 
-        return "UTR" + number;
+            utr = "UTR" + number;
+
+        } while (paymentDAO.findPaymentByUtr(utr) != null);
+
+        return utr;
 
     }
 
@@ -838,19 +656,7 @@ public class PaymentService {
      */
     public void viewSellerPayments(Seller seller) {
 
-        List<Payment> payments =
-                DataStore.PAYMENTS.values()
-
-                        .stream()
-
-                        .filter(payment ->
-
-                                payment.getOrder()
-                                        .getProduct()
-                                        .getSeller()
-                                        .equals(seller))
-
-                        .toList();
+        List<Payment> payments = paymentDAO.findPaymentsBySeller(seller.getUserId());
 
         if (payments.isEmpty()) {
 
@@ -860,28 +666,13 @@ public class PaymentService {
             return;
 
         }
+        displaySellerPayments(
 
-        DisplayUtil.printTable(
+                payments,
 
-                "SELLER PAYMENT HISTORY",
+                "SELLER PAYMENT HISTORY"
 
-                new String[]{
-
-                        "UTR Number",
-
-                        "Customer",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildSellerPaymentRows(payments));
+        );
 
     }
 
@@ -892,73 +683,39 @@ public class PaymentService {
      */
     public void searchSellerPayment(Seller seller) {
 
-        String keyword =
-                InputUtil.readString(
-                                "Enter Customer Name / Product / UTR Number : ")
-                        .trim();
+        String keyword = InputUtil.readString(
+                "Enter Customer Name / Product / UTR Number : ").trim();
 
         List<Payment> payments =
-                DataStore.PAYMENTS.values()
-
-                        .stream()
-
-                        .filter(payment ->
-
-                                payment.getOrder()
-                                        .getProduct()
-                                        .getSeller()
-                                        .equals(seller))
-
-                        .filter(payment ->
-
-                                payment.getCustomer()
-                                        .getUserName()
-                                        .equalsIgnoreCase(keyword)
-
-                                        ||
-
-                                        payment.getOrder()
-                                                .getProduct()
-                                                .getProductName()
-                                                .equalsIgnoreCase(keyword)
-
-                                        ||
-
-                                        payment.getUtrNumber()
-                                                .equalsIgnoreCase(keyword))
-
-                        .toList();
+                paymentDAO.findPaymentsBySellerAndKeyword(
+                        seller.getUserId(),keyword
+                );
 
         if (payments.isEmpty()) {
+            DisplayUtil.printMessage("Payment Not Found.");
+            return;
+        }
+        displaySellerPayments(payments, "SEARCH RESULT");
+
+    }
+
+    /**
+     * Validates Payments.
+     *
+     * @return true if payments exist
+     */
+    private boolean validatePayments() {
+
+        if (paymentDAO.findAllPayments().isEmpty()) {
 
             DisplayUtil.printMessage(
-                    "Payment Not Found.");
+                    "No Payments Found.");
 
-            return;
+            return false;
 
         }
 
-        DisplayUtil.printTable(
-
-                "SEARCH RESULT",
-
-                new String[]{
-
-                        "UTR Number",
-
-                        "Customer",
-
-                        "Product",
-
-                        "Method",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildSellerPaymentRows(payments));
+        return true;
 
     }
 
@@ -1159,6 +916,137 @@ public class PaymentService {
                 })
 
                 .toList();
+
+    }
+
+    /**
+     * Displays Customer Payments.
+     *
+     * @param payments Payments
+     * @param title Table Title
+     */
+    private void displayCustomerPayments(List<Payment> payments,
+            String title) {
+
+        if (payments.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Payments Found.");
+
+            return;
+
+        }
+
+        DisplayUtil.printTable(
+
+                title,
+
+                new String[]{
+
+                        "UTR Number",
+
+                        "Product",
+
+                        "Method",
+
+                        "Amount",
+
+                        "Status"
+
+                },
+
+                buildPaymentRows(
+                        payments)
+
+        );
+
+    }
+
+    /**
+     * Displays Seller Payments.
+     *
+     * @param payments Payments
+     * @param title Table Title
+     */
+    private void displaySellerPayments(List<Payment> payments, String title) {
+
+        if (payments.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Payments Found.");
+
+            return;
+
+        }
+
+        DisplayUtil.printTable(
+
+                title,
+
+                new String[]{
+
+                        "UTR Number",
+
+                        "Customer",
+
+                        "Product",
+
+                        "Method",
+
+                        "Amount",
+
+                        "Status"
+
+                },
+
+                buildSellerPaymentRows(
+                        payments)
+
+        );
+
+    }
+
+    /**
+     * Displays Admin Payments.
+     *
+     * @param payments Payments
+     * @param title Table Title
+     */
+    private void displayAdminPayments(List<Payment> payments, String title) {
+
+        if (payments.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Payments Found.");
+
+            return;
+
+        }
+
+        DisplayUtil.printTable(
+
+                title,
+
+                new String[]{
+
+                        "UTR Number",
+
+                        "Customer",
+
+                        "Product",
+
+                        "Method",
+
+                        "Amount",
+
+                        "Status"
+
+                },
+
+                buildAdminPaymentRows(
+                        payments)
+
+        );
 
     }
 

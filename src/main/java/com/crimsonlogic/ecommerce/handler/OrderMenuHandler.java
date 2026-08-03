@@ -28,11 +28,7 @@ public class OrderMenuHandler {
                 new InventoryService();
 
         this.orderService =
-                new OrderService(
-
-                        new CartService(),
-
-                        inventoryService);
+                new OrderService();
 
     }
 

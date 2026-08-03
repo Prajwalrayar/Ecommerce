@@ -4,6 +4,11 @@ import java.util.Objects;
 
 public class Address {
 
+    /**
+     * Address ID.
+     */
+    private String addressId;
+
     /* House Number (Example: 45, B-102, Flat-203) */
     private String houseNumber;
 
@@ -33,13 +38,16 @@ public class Address {
     /**
      * Parameterized Constructor
      */
-    public Address(String houseNumber,
-                   String street,
-                   String city,
-                   String state,
-                   String country,
-                   String zipCode) {
+    public Address(
+            String addressId,
+            String houseNumber,
+            String street,
+            String city,
+            String state,
+            String country,
+            String zipCode) {
 
+        this.addressId = addressId;
         this.houseNumber = houseNumber;
         this.street = street;
         this.city = city;
@@ -52,6 +60,11 @@ public class Address {
     // Getters
     // ===========================
 
+    public String getAddressId() {
+
+        return addressId;
+
+    }
     public String getHouseNumber() {
         return houseNumber;
     }
@@ -80,6 +93,11 @@ public class Address {
     // Setters
     // ===========================
 
+    public void setAddressId(String addressId) {
+
+        this.addressId = addressId;
+
+    }
     public void setHouseNumber(String houseNumber) {
         this.houseNumber = houseNumber;
     }
@@ -109,22 +127,25 @@ public class Address {
     // ===========================
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
+    public boolean equals(Object object) {
+
+        if (this == object) {
             return true;
-        if (!(obj instanceof Address))
+        }
+
+        if (!(object instanceof Address address)) {
             return false;
-        Address other = (Address) obj;
-        return Objects.equals(houseNumber, other.houseNumber)
-                && Objects.equals(street, other.street)
-                && Objects.equals(city, other.city)
-                && Objects.equals(state, other.state)
-                && Objects.equals(country, other.country)
-                && Objects.equals(zipCode, other.zipCode);
+        }
+
+        return Objects.equals(
+                addressId,
+                address.addressId);
+
     }
     @Override
     public int hashCode() {
         return Objects.hash(
+                addressId,
                 houseNumber,
                 street,
                 city,

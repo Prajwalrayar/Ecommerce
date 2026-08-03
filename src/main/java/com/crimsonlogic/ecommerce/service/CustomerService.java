@@ -7,6 +7,7 @@ import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.service.abstraction.UserService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
+import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
@@ -58,6 +59,7 @@ public class CustomerService extends UserService<Customer> {
                         InputUtil.readString("Enter Zip Code: ");
 
                 Address address = new Address(
+                        IdGenerator.generateId("ADDR"),
                         houseNumber,
                         street,
                         city,

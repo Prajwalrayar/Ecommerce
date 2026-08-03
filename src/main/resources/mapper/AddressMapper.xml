@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.AddressMapper">
+
+    <!-- ====================================================== -->
+    <!-- Result Map -->
+    <!-- ====================================================== -->
+
+    <resultMap id="AddressResultMap"
+               type="com.crimsonlogic.ecommerce.model.Address">
+
+        <id property="addressId"
+            column="address_id"/>
+
+        <result property="houseNumber"
+                column="house_number"/>
+
+        <result property="street"
+                column="street"/>
+
+        <result property="city"
+                column="city"/>
+
+        <result property="state"
+                column="state"/>
+
+        <result property="country"
+                column="country"/>
+
+        <result property="zipCode"
+                column="zip_code"/>
+
+    </resultMap>
+
+    <!-- ====================================================== -->
+    <!-- Insert -->
+    <!-- ====================================================== -->
+
+    <insert id="insertAddress">
+
+        INSERT INTO address(
+
+        address_id,
+
+        house_number,
+
+        street,
+
+        city,
+
+        state,
+
+        country,
+
+        zip_code
+
+        )
+
+        VALUES(
+
+        #{addressId},
+
+        #{houseNumber},
+
+        #{street},
+
+        #{city},
+
+        #{state},
+
+        #{country},
+
+        #{zipCode}
+
+        )
+
+    </insert>
+
+    <!-- ====================================================== -->
+    <!-- Update -->
+    <!-- ====================================================== -->
+
+    <update id="updateAddress">
+
+        UPDATE address
+
+        SET
+
+        house_number=#{houseNumber},
+
+        street=#{street},
+
+        city=#{city},
+
+        state=#{state},
+
+        country=#{country},
+
+        zip_code=#{zipCode}
+
+        WHERE address_id=#{addressId}
+
+    </update>
+
+    <!-- ====================================================== -->
+    <!-- Delete -->
+    <!-- ====================================================== -->
+
+    <delete id="deleteAddress">
+
+        DELETE
+
+        FROM address
+
+        WHERE address_id=#{addressId}
+
+    </delete>
+
+    <!-- ====================================================== -->
+    <!-- Find By Id -->
+    <!-- ====================================================== -->
+
+    <select id="findAddressById"
+
+            resultMap="AddressResultMap">
+
+        SELECT *
+
+        FROM address
+
+        WHERE address_id=#{addressId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All Addresses -->
+    <!-- ===================================================== -->
+
+    <select id="findAllAddresses"
+            resultMap="AddressResultMap">
+
+        SELECT *
+
+        FROM address
+
+        ORDER BY city
+
+    </select>
+
+</mapper>

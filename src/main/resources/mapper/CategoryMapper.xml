@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.CategoryMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="CategoryResultMap"
+               type="com.crimsonlogic.ecommerce.model.Category">
+
+        <id property="categoryId"
+            column="category_id"/>
+
+        <result property="categoryName"
+                column="category_name"/>
+
+        <result property="categoryDescription"
+                column="category_description"/>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertCategory">
+
+        INSERT INTO categories(
+
+        category_id,
+
+        category_name,
+
+        category_description
+
+        )
+
+        VALUES(
+
+        #{categoryId},
+
+        #{categoryName},
+
+        #{categoryDescription}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updateCategory">
+
+        UPDATE categories
+
+        SET
+
+        category_name = #{categoryName},
+
+        category_description = #{categoryDescription}
+
+        WHERE category_id = #{categoryId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteCategory">
+
+        DELETE FROM categories
+
+        WHERE category_id = #{categoryId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findCategoryById"
+            resultMap="CategoryResultMap">
+
+        SELECT *
+
+        FROM categories
+
+        WHERE category_id = #{categoryId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Name -->
+    <!-- ===================================================== -->
+
+    <select id="findCategoryByName"
+            resultMap="CategoryResultMap">
+
+        SELECT *
+
+        FROM categories
+
+        WHERE category_name = #{categoryName}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All -->
+    <!-- ===================================================== -->
+
+    <select id="findAllCategories"
+            resultMap="CategoryResultMap">
+
+        SELECT *
+
+        FROM categories
+
+        ORDER BY category_name
+
+    </select>
+
+</mapper>

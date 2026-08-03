@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.InventoryMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="InventoryResultMap"
+               type="com.crimsonlogic.ecommerce.model.Inventory">
+
+        <id property="inventoryId"
+            column="inventory_id"/>
+
+        <result property="quantity"
+                column="quantity"/>
+
+        <association property="product"
+                     javaType="com.crimsonlogic.ecommerce.model.Product">
+
+            <id property="productId"
+                column="product_id"/>
+
+            <result property="productName"
+                    column="product_name"/>
+
+            <result property="productDescription"
+                    column="product_description"/>
+
+            <result property="productPrice"
+                    column="product_price"/>
+
+            <result property="productStatus"
+                    column="product_status"/>
+
+            <association property="category"
+                         javaType="com.crimsonlogic.ecommerce.model.Category">
+
+                <id property="categoryId"
+                    column="category_id"/>
+
+                <result property="categoryName"
+                        column="category_name"/>
+
+                <result property="categoryDescription"
+                        column="category_description"/>
+
+            </association>
+
+            <association property="seller"
+                         javaType="com.crimsonlogic.ecommerce.model.Seller">
+
+                <id property="userId"
+                    column="user_id"/>
+
+                <result property="userName"
+                        column="user_name"/>
+
+                <result property="shopName"
+                        column="shop_name"/>
+
+            </association>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertInventory">
+
+        INSERT INTO inventory(
+
+        inventory_id,
+
+        product_id,
+
+        quantity
+
+        )
+
+        VALUES(
+
+        #{inventoryId},
+
+        #{product.productId},
+
+        #{quantity}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updateInventory">
+
+        UPDATE inventory
+
+        SET
+
+        product_id = #{product.productId},
+
+        quantity = #{quantity}
+
+        WHERE inventory_id = #{inventoryId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Update Quantity -->
+    <!-- ===================================================== -->
+
+    <update id="updateQuantity">
+
+        UPDATE inventory
+
+        SET
+
+        quantity = #{quantity}
+
+        WHERE inventory_id = #{inventoryId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteInventory">
+
+        DELETE FROM inventory
+
+        WHERE inventory_id = #{inventoryId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findInventoryById"
+            resultMap="InventoryResultMap">
+
+        SELECT
+
+        i.*,
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.shop_name
+
+        FROM inventory i
+
+        INNER JOIN products p
+
+        ON i.product_id = p.product_id
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        WHERE i.inventory_id = #{inventoryId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Product -->
+    <!-- ===================================================== -->
+
+    <select id="findInventoryByProduct"
+            resultMap="InventoryResultMap">
+
+        SELECT
+
+        i.*,
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.shop_name
+
+        FROM inventory i
+
+        INNER JOIN products p
+
+        ON i.product_id = p.product_id
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        WHERE i.product_id = #{productId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Seller -->
+    <!-- ===================================================== -->
+
+    <select id="findInventoryBySeller"
+            resultMap="InventoryResultMap">
+
+        SELECT
+
+        i.*,
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.shop_name
+
+        FROM inventory i
+
+        INNER JOIN products p
+
+        ON i.product_id = p.product_id
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        WHERE s.user_id = #{sellerId}
+
+        ORDER BY p.product_name
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All -->
+    <!-- ===================================================== -->
+
+    <select id="findAllInventory"
+            resultMap="InventoryResultMap">
+
+        SELECT
+
+        i.*,
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.shop_name
+
+        FROM inventory i
+
+        INNER JOIN products p
+
+        ON i.product_id = p.product_id
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        ORDER BY p.product_name
+
+    </select>
+
+</mapper>

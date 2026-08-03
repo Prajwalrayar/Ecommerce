@@ -1,11 +1,12 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CategoryDAO;
+import com.crimsonlogic.ecommerce.dao.ProductDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Category;
 import com.crimsonlogic.ecommerce.model.Product;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -19,19 +20,58 @@ import java.util.List;
  */
 public class ProductService {
 
+    /**
+     * Category Service.
+     */
     private final CategoryService categoryService =
             new CategoryService();
 
-    public ProductService(){
+    /**
+     * Category DAO.
+     */
+    private final CategoryDAO categoryDAO =
+            new CategoryDAO();
+
+    /**
+     * Product DAO.
+     */
+    private final ProductDAO productDAO =
+            new ProductDAO();
+
+    /**
+     * Product Table Headers.
+     */
+    private static final String[] PRODUCT_HEADERS = {
+
+            "Product ID",
+
+            "Product Name",
+
+            "Category",
+
+            "Price (₹)",
+
+            "Seller",
+
+            "Status"
+
+    };
+
+    /**
+     * Default Constructor.
+     */
+    public ProductService() {
 
     }
-    //  Adds Product.
+
+    /**
+     * Adds Product.
+     *
+     * @param seller Seller
+     */
     public void addProduct(Seller seller) {
 
-        if (DataStore.CATEGORIES.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Categories Available.");
+        if (!validateCategoriesAvailable()) {
 
             return;
 
@@ -41,88 +81,45 @@ public class ProductService {
 
     }
 
-    //Displays all Products.
+    /**
+     * Displays all Products.
+     */
     public void viewAllProducts() {
-        if (!hasProducts()) {
-            DisplayUtil.printMessage(
-                    "No Products Available.");
 
-            return;
-        }
-        String[] headers = {"Product ID", "Product Name", "Category",
-                "Price", "Seller", "Status"};
+        displayProducts(
 
-        DisplayUtil.printTable(
-                "AVAILABLE PRODUCTS",
-                headers,
-                buildProductRows(DataStore.PRODUCTS.values()
-                                .stream()
-                                .toList())
+                productDAO.findAllProducts(),
+
+                "AVAILABLE PRODUCTS"
+
         );
+
     }
 
-    // Displays Products added by the Seller.
+    /**
+     * Displays Seller Products.
+     *
+     * @param seller Seller
+     */
     public void viewSellerProducts(Seller seller) {
 
-        List<Product> sellerProducts = DataStore.PRODUCTS.values()
-                        .stream()
-                        .filter(product -> product.getSeller()
-                                        .equals(seller))
-                        .toList();
-        if (sellerProducts.isEmpty()) {
-            DisplayUtil.printMessage("No Products Available.");
-            return;
-        }
+        displayProducts(
 
-        String[] headers = {
+                productDAO.findProductsBySeller(
+                        seller.getUserId()),
 
-                "Product ID",
+                "MY PRODUCTS"
 
-                "Product Name",
+        );
 
-                "Category",
+    }
 
-                "Price",
+    /**
+     * Displays Products for Customers.
+     */
+    public void browseProducts() {
 
-                "Status"
-
-        };
-
-        List<String[]> rows =
-
-                sellerProducts.stream()
-
-                        .map(product ->
-
-                                new String[]{
-
-                                        product.getProductId(),
-
-                                        product.getProductName(),
-
-                                        product.getCategory()
-
-                                                .getCategoryName(),
-
-                                        String.valueOf(
-
-                                                product.getProductPrice()),
-
-                                        product.getProductStatus()
-
-                                                .name()
-
-                                })
-
-                        .toList();
-
-        DisplayUtil.printTable(
-
-                "MY PRODUCTS",
-
-                headers,
-
-                rows);
+        viewAllProducts();
 
     }
 
@@ -131,9 +128,7 @@ public class ProductService {
      */
     public void searchProduct() {
 
-        if (!hasProducts()) {
-            DisplayUtil.printMessage(
-                    "No Products Available.");
+        if (!validateProductsAvailable()) {
 
             return;
 
@@ -152,8 +147,18 @@ public class ProductService {
 
     }
 
-    //Updates a Product.
+    /**
+     * Updates Product.
+     *
+     * @param seller Seller
+     */
     public void updateProduct(Seller seller) {
+
+        if (!validateProductsAvailable()) {
+
+            return;
+
+        }
 
         viewSellerProducts(seller);
 
@@ -168,8 +173,18 @@ public class ProductService {
 
     }
 
-    // Deletes a Product.
+    /**
+     * Deletes Product.
+     *
+     * @param seller Seller
+     */
     public void deleteProduct(Seller seller) {
+
+        if (!validateProductsAvailable()) {
+
+            return;
+
+        }
 
         viewSellerProducts(seller);
 
@@ -183,7 +198,17 @@ public class ProductService {
         }
 
     }
+
+    /**
+     * Deletes Product by Admin.
+     */
     public void deleteProductByAdmin() {
+
+        if (!validateProductsAvailable()) {
+
+            return;
+
+        }
 
         viewAllProducts();
 
@@ -197,27 +222,17 @@ public class ProductService {
         }
 
     }
-
-    // Displays all available Products.
     /**
-     * Displays Products for Customers.
+     * Filters Products by Category.
      */
-    public void browseProducts() {
-        if (!hasProducts()) {
-            return;
-        }
-        viewAllProducts();
-    }
-
-    //  Displays Products belonging to a Category.
     public void filterProductsByCategory() {
 
-        if (!hasProducts()) {
-            DisplayUtil.printMessage(
-                    "No Products Available.");
+        if (!validateProductsAvailable()) {
 
             return;
+
         }
+
         categoryService.viewAllCategories();
 
         String categoryId =
@@ -227,220 +242,202 @@ public class ProductService {
                         .toUpperCase();
 
         List<Product> products =
-                DataStore.PRODUCTS.values()
-                        .stream()
-                        .filter(product ->
-                                product.getCategory()
-                                        .getCategoryId()
-                                        .equalsIgnoreCase(categoryId))
-                        .toList();
+                productDAO.findProductsByCategory(categoryId);
 
         if (products.isEmpty()) {
 
-            DisplayUtil.printMessage(
+            DisplayUtil.printWarning(
                     "No Products Found.");
 
             return;
 
         }
 
-        String[] headers = {
-                "Product ID",
-                "Product Name",
-                "Category",
-                "Price (₹)",
-                "Seller",
-                "Status"
-        };
-
-        List<String[]> rows =
-                products.stream()
-                        .map(product -> new String[]{
-                                product.getProductId(),
-                                product.getProductName(),
-                                product.getCategory()
-                                        .getCategoryName(),
-                                String.format("%.2f",
-                                        product.getProductPrice()),
-                                product.getSeller()
-                                        .getShopName(),
-                                product.getProductStatus()
-                                        .name()
-                        })
-                        .toList();
-
-        DisplayUtil.printTable(
-                "CATEGORY PRODUCTS",
-                headers,
-                rows);
+        displayProducts(
+                products,
+                "CATEGORY PRODUCTS");
 
     }
 
-    // Displays Products sorted by Price.
+    /**
+     * Displays Products sorted by Price.
+     */
     public void sortProductsByPrice() {
 
-        if (!hasProducts()) {
-            DisplayUtil.printMessage(
-                    "No Products Available.");
+        if (!validateProductsAvailable()) {
 
             return;
+
         }
 
-        String[] headers = {
-                "Product ID",
-                "Product Name",
-                "Category",
-                "Price (₹)",
-                "Seller",
-                "Status"
-        };
-
-        List<String[]> rows =
-                DataStore.PRODUCTS.values()
+        List<Product> products =
+                productDAO.findAllProducts()
                         .stream()
-                        .sorted(Comparator.comparing(Product::getProductPrice))
-                        .map(product -> new String[]{
-                                product.getProductId(),
-                                product.getProductName(),
-                                product.getCategory()
-                                        .getCategoryName(),
-                                String.format("%.2f",
-                                        product.getProductPrice()),
-                                product.getSeller()
-                                        .getShopName(),
-                                product.getProductStatus()
-                                        .name()
-                        })
+                        .sorted(Comparator.comparing(
+                                Product::getProductPrice))
                         .toList();
 
-        DisplayUtil.printTable(
-                "PRODUCTS SORTED BY PRICE",
-                headers,
-                rows);
+        displayProducts(
+                products,
+                "PRODUCTS SORTED BY PRICE");
 
     }
 
-    // ---------------------------------------------------------
-
-    // Creates Product.
+    /**
+     * Creates Product.
+     *
+     * @param seller Seller
+     */
     private void createProduct(Seller seller) {
 
         while (true) {
-            try {
-                System.out.println("\n========== ADD PRODUCT ==========");
 
-                String productName = InputUtil.readString("Enter Product Name : ");
-                ValidationUtil.validateProductName(productName);
-                if (isDuplicateProduct(productName, seller)) {
-                    DisplayUtil.printSuccess("Product Already Exists.");
+            try {
+
+                System.out.println(
+                        "\n========== ADD PRODUCT ==========");
+
+                String productName =
+                        InputUtil.readString(
+                                "Enter Product Name : ");
+
+                ValidationUtil.validateProductName(
+                        productName);
+
+                if (isDuplicateProduct(
+                        productName,
+                        seller)) {
+
+                    DisplayUtil.printWarning(
+                            "Product Already Exists.");
+
                     return;
+
                 }
 
-                String description = InputUtil.readString("Enter Product Description : ");
+                String description =
+                        InputUtil.readString(
+                                "Enter Product Description : ");
 
-                ValidationUtil.validateProductDescription(description);
+                ValidationUtil.validateProductDescription(
+                        description);
 
-                Category category =getCategoryOrNull();
+                Category category =
+                        getCategoryOrNull();
 
                 if (category == null) {
+
                     continue;
+
                 }
 
-                double price = InputUtil.readDouble("Enter Product Price : ");
+                double price =
+                        InputUtil.readDouble(
+                                "Enter Product Price : ");
 
-                ValidationUtil.validateProductPrice(price);
+                ValidationUtil.validateProductPrice(
+                        price);
 
-                Product product = new Product(generateProductId(), productName,
-                        description, price, category, seller, ProductStatus.AVAILABLE);
+                Product product =
+                        new Product(
 
-                DataStore.PRODUCTS.put(product.getProductId(), product);
-                DisplayUtil.printSuccess("Product Added Successfully.");
-                System.out.println("Product ID : " + product.getProductId());
+                                generateProductId(),
+
+                                productName,
+
+                                description,
+
+                                price,
+
+                                category,
+
+                                seller,
+
+                                ProductStatus.AVAILABLE
+
+                        );
+
+                productDAO.insertProduct(product);
+
+                DisplayUtil.printSuccess(
+                        "Product Added Successfully.");
+
+                System.out.println(
+                        "Product ID : "
+                                + product.getProductId());
+
                 break;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printError(
+                        exception.getMessage());
+
             }
 
-            catch (ValidationException exception) {
-                DisplayUtil.printMessage(exception.getMessage());
-            }
         }
-    }
-
-    // Checks whether Product already exists.
-    private boolean isDuplicateProduct(String productName, Seller seller) {
-
-        return DataStore.PRODUCTS.values()
-
-                .stream()
-
-                .anyMatch(product ->
-
-                        product.getSeller().equals(seller)
-
-                                &&
-
-                                product.getProductName()
-
-                                        .equalsIgnoreCase(productName));
 
     }
 
-    // Generates Product ID.
-    private String generateProductId() {String productId;
+    /**
+     * Displays Product List.
+     *
+     * @param products Product List
+     * @param title    Table Title
+     */
+    private void displayProducts(
+            List<Product> products,
+            String title) {
 
-        do {
+        if (products.isEmpty()) {
 
-            productId =
-                    IdGenerator.generateId("PRO");
+            DisplayUtil.printWarning(
+                    "No Products Available.");
+
+            return;
 
         }
 
-        while (DataStore.PRODUCTS.containsKey(productId));
+        DisplayUtil.printTable(
 
-        return productId;
+                title,
 
-    }
+                PRODUCT_HEADERS,
 
-    // Returns Category if found.
+                buildProductRows(products)
 
-    private Category getCategoryOrNull() {
-
-        categoryService.viewAllCategories();
-
-        String categoryId =
-                InputUtil.readString("Enter Category ID : ")
-                        .trim().toUpperCase();
-
-        Category category = DataStore.CATEGORIES.get(categoryId);
-
-        if (category == null) {
-            DisplayUtil.printMessage("Category Not Found.");
-        }
-
-        return category;
+        );
 
     }
-    // Builds Product Table Rows.
 
-    private List<String[]> buildProductRows(List<Product> products) {
+    /**
+     * Builds Product Table Rows.
+     *
+     * @param products Product List
+     * @return Table Rows
+     */
+    private List<String[]> buildProductRows(
+            List<Product> products) {
 
         return products.stream()
 
                 .map(product -> new String[]{
 
-        product.getProductId(),
+                        product.getProductId(),
 
-        product.getProductName(),
+                        product.getProductName(),
 
-        product.getCategory()
+                        product.getCategory()
                                 .getCategoryName(),
 
-        String.valueOf(
-        product.getProductPrice()),
+                        String.format(
+                                "%.2f",
+                                product.getProductPrice()),
 
-        product.getSeller()
+                        product.getSeller()
                                 .getShopName(),
 
-        product.getProductStatus()
+                        product.getProductStatus()
                                 .name()
 
                 })
@@ -448,9 +445,40 @@ public class ProductService {
                 .toList();
 
     }
+    /**
+     * Returns Category if found.
+     *
+     * @return Category
+     */
+    private Category getCategoryOrNull() {
 
-    // Returns Product if found.
+        categoryService.viewAllCategories();
 
+        String categoryId =
+                InputUtil.readString(
+                                "Enter Category ID : ")
+                        .trim()
+                        .toUpperCase();
+
+        Category category =
+                categoryDAO.findCategoryById(categoryId);
+
+        if (category == null) {
+
+            DisplayUtil.printError(
+                    "Category Not Found.");
+
+        }
+
+        return category;
+
+    }
+
+    /**
+     * Returns Product if found.
+     *
+     * @return Product
+     */
     private Product getProductOrNull() {
 
         String productId =
@@ -460,11 +488,11 @@ public class ProductService {
                         .toUpperCase();
 
         Product product =
-                findProductById(productId);
+                productDAO.findProductById(productId);
 
         if (product == null) {
 
-            DisplayUtil.printMessage(
+            DisplayUtil.printError(
                     "Product Not Found.");
 
         }
@@ -473,22 +501,43 @@ public class ProductService {
 
     }
 
-    // Returns Seller Product.
+    /**
+     * Returns Seller Product.
+     *
+     * @param seller Seller
+     * @return Product
+     */
+    private Product getSellerProductOrNull(
+            Seller seller) {
 
-    private Product getSellerProductOrNull(Seller seller) {
         Product product = getProductOrNull();
+
         if (product == null) {
+
             return null;
+
         }
-        if (!product.getSeller().equals(seller)) {
-            DisplayUtil.printMessage("Product Not Found.");
+
+        if (!product.getSeller()
+                .getUserId()
+                .equals(seller.getUserId())) {
+
+            DisplayUtil.printError(
+                    "Product Does Not Belong To You.");
+
             return null;
+
         }
+
         return product;
+
     }
 
-    // Displays Product Details.
-
+    /**
+     * Displays Product Details.
+     *
+     * @param product Product
+     */
     private void displayProduct(Product product) {
 
         DisplayUtil.printTable(
@@ -500,81 +549,220 @@ public class ProductService {
                         "Value"
                 },
 
-                product.getTableRows());
+                product.getTableRows()
+
+        );
 
     }
 
-    // Finds Product by Product ID.
-    public Product findProductById(String productId) {
-
-        return DataStore.PRODUCTS.get(
-                productId.toUpperCase());
-
-    }
     /**
-     * Finds Product using Product Name.
+     * Finds Product by Product ID.
+     *
+     * @param productId Product ID
+     * @return Product
+     */
+    public Product findProductById(
+            String productId) {
+
+        return productDAO.findProductById(
+                productId);
+
+    }
+
+    /**
+     * Finds Product by Product Name.
      *
      * @param productName Product Name
      * @return Product
      */
-    public Product findProductByName(String productName) {
+    public Product findProductByName(
+            String productName) {
 
-        return DataStore.PRODUCTS.values()
-                .stream()
-                .filter(product ->
-                        product.getProductName()
-                                .equalsIgnoreCase(productName))
-                .findFirst()
-                .orElse(null);
+        return productDAO.findProductByName(
+                productName);
 
     }
 
     /**
-     * Checks whether Products are available.
+     * Checks whether Products exist.
      *
-     * @return true if Products exist, otherwise false
+     * @return true if Products exist
      */
     public boolean hasProducts() {
 
-        return !DataStore.PRODUCTS.isEmpty();
+        return !productDAO.findAllProducts()
+                .isEmpty();
 
     }
 
-    // Updates Existing Product.
-    private void updateExistingProduct(Product product) {
+    /**
+     * Validates Product Availability.
+     *
+     * @return true if Products exist
+     */
+    private boolean validateProductsAvailable() {
+
+        if (!hasProducts()) {
+
+            DisplayUtil.printWarning(
+                    "No Products Available.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Category Availability.
+     *
+     * @return true if Categories exist
+     */
+    private boolean validateCategoriesAvailable() {
+
+        if (categoryDAO.findAllCategories()
+                .isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Categories Available.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Checks Duplicate Product.
+     *
+     * @param productName Product Name
+     * @param seller Seller
+     * @return true if duplicate
+     */
+    private boolean isDuplicateProduct(
+            String productName,
+            Seller seller) {
+
+        return productDAO.findProductsBySeller(
+                        seller.getUserId())
+                .stream()
+                .anyMatch(product ->
+                        product.getProductName()
+                                .equalsIgnoreCase(productName));
+
+    }
+
+    /**
+     * Generates Product ID.
+     *
+     * @return Product ID
+     */
+    private String generateProductId() {
+
+        String productId;
+
+        do {
+
+            productId =
+                    IdGenerator.generateId("PRO");
+
+        } while (productDAO.findProductById(productId)
+                != null);
+
+        return productId;
+
+    }
+
+    /**
+     * Updates Existing Product.
+     *
+     * @param product Product
+     */
+    private void updateExistingProduct(
+            Product product) {
+
         while (true) {
+
             try {
-                String productName = InputUtil.readOptionalString(
-                                "Enter Product Name: ");
+
+                String productName =
+                        InputUtil.readOptionalString(
+                                "Enter Product Name (Press Enter to Skip): ");
+
                 if (productName != null) {
-                    ValidationUtil.validateProductName(productName);
-                    product.setProductName(productName);
+
+                    ValidationUtil.validateProductName(
+                            productName);
+
+                    product.setProductName(
+                            productName);
+
                 }
-                String description = InputUtil.readOptionalString(
+
+                String description =
+                        InputUtil.readOptionalString(
                                 "Enter Product Description (Press Enter to Skip): ");
+
                 if (description != null) {
-                    ValidationUtil.validateProductDescription(description);
-                    product.setProductDescription(description);
+
+                    ValidationUtil.validateProductDescription(
+                            description);
+
+                    product.setProductDescription(
+                            description);
+
                 }
-                Double price = InputUtil.readOptionalDouble(
+
+                Double price =
+                        InputUtil.readOptionalDouble(
                                 "Enter Product Price (Press Enter to Skip): ");
+
                 if (price != null) {
-                    ValidationUtil.validateProductPrice(price);
-                    product.setProductPrice(price);
+
+                    ValidationUtil.validateProductPrice(
+                            price);
+
+                    product.setProductPrice(
+                            price);
+
                 }
-                DisplayUtil.printSuccess("Product Updated Successfully.");
+
+                productDAO.updateProduct(product);
+
+                DisplayUtil.printSuccess(
+                        "Product Updated Successfully.");
+
                 break;
-            }
-            catch (ValidationException exception) {
-                DisplayUtil.printMessage(exception.getMessage());
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printError(
+                        exception.getMessage());
+
             }
 
         }
 
     }
-    private void removeProduct(Product product) {
-        DataStore.PRODUCTS.remove(product.getProductId());
 
-        DisplayUtil.printSuccess("Product Deleted Successfully.");
+    /**
+     * Removes Product.
+     *
+     * @param product Product
+     */
+    private void removeProduct(
+            Product product) {
+
+        productDAO.deleteProduct(
+                product.getProductId());
+
+        DisplayUtil.printSuccess(
+                "Product Deleted Successfully.");
+
     }
+
 }
