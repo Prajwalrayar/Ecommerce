@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.ProductMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="ProductResultMap"
+               type="com.crimsonlogic.ecommerce.model.Product">
+
+        <!-- Product -->
+
+        <id property="productId"
+            column="product_id"/>
+
+        <result property="productName"
+                column="product_name"/>
+
+        <result property="productDescription"
+                column="product_description"/>
+
+        <result property="productPrice"
+                column="product_price"/>
+
+        <result property="productStatus"
+                column="product_status"/>
+
+        <!-- Category -->
+
+        <association property="category"
+                     javaType="com.crimsonlogic.ecommerce.model.Category">
+
+            <id property="categoryId"
+                column="category_id"/>
+
+            <result property="categoryName"
+                    column="category_name"/>
+
+            <result property="categoryDescription"
+                    column="category_description"/>
+
+        </association>
+
+        <!-- Seller -->
+
+        <association property="seller"
+                     javaType="com.crimsonlogic.ecommerce.model.Seller">
+
+            <id property="userId"
+                column="user_id"/>
+
+            <result property="userName"
+                    column="user_name"/>
+
+            <result property="userEmail"
+                    column="user_email"/>
+
+            <result property="userPhNo"
+                    column="user_phone"/>
+
+            <result property="userPassword"
+                    column="user_password"/>
+
+            <result property="shopName"
+                    column="shop_name"/>
+
+            <result property="shopAddress"
+                    column="shop_address"/>
+
+            <!-- Seller Address -->
+
+            <association property="address"
+                         javaType="com.crimsonlogic.ecommerce.model.Address">
+
+                <id property="addressId"
+                    column="address_id"/>
+
+                <result property="houseNumber"
+                        column="house_number"/>
+
+                <result property="street"
+                        column="street"/>
+
+                <result property="city"
+                        column="city"/>
+
+                <result property="state"
+                        column="state"/>
+
+                <result property="country"
+                        column="country"/>
+
+                <result property="zipCode"
+                        column="zip_code"/>
+
+            </association>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert Product -->
+    <!-- ===================================================== -->
+
+    <insert id="insertProduct">
+
+        INSERT INTO products(
+
+        product_id,
+
+        product_name,
+
+        product_description,
+
+        product_price,
+
+        category_id,
+
+        user_id,
+
+        product_status
+
+        )
+
+        VALUES(
+
+        #{productId},
+
+        #{productName},
+
+        #{productDescription},
+
+        #{productPrice},
+
+        #{category.categoryId},
+
+        #{seller.userId},
+
+        #{productStatus}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update Product -->
+    <!-- ===================================================== -->
+
+    <update id="updateProduct">
+
+        UPDATE products
+
+        SET
+
+        product_name = #{productName},
+
+        product_description = #{productDescription},
+
+        product_price = #{productPrice},
+
+        category_id = #{category.categoryId},
+
+        user_id = #{seller.userId},
+
+        product_status = #{productStatus}
+
+        WHERE product_id = #{productId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete Product -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteProduct">
+
+        DELETE
+
+        FROM products
+
+        WHERE product_id = #{productId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find Product By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findProductById"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.product_id = #{productId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Product By Name -->
+    <!-- ===================================================== -->
+
+    <select id="findProductByName"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.product_name = #{productName}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All Products -->
+    <!-- ===================================================== -->
+
+    <select id="findAllProducts"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        ORDER BY p.product_name
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Products By Seller -->
+    <!-- ===================================================== -->
+
+    <select id="findProductsBySeller"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.user_id = #{sellerId}
+
+        ORDER BY p.product_name
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Products By Category -->
+    <!-- ===================================================== -->
+
+    <select id="findProductsByCategory"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.category_id = #{categoryId}
+
+        ORDER BY p.product_name
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Products By Status -->
+    <!-- ===================================================== -->
+
+    <select id="findProductsByStatus"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.product_status = #{productStatus}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Available Products -->
+    <!-- ===================================================== -->
+
+    <select id="findAvailableProducts"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id = c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id = s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE p.product_status='AVAILABLE'
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Product By Id And Seller -->
+    <!-- ===================================================== -->
+
+    <select id="findProductByIdAndSeller"
+            resultMap="ProductResultMap">
+
+        SELECT
+
+        p.*,
+
+        c.category_name,
+        c.category_description,
+
+        s.user_name,
+        s.user_email,
+        s.user_phone,
+        s.user_password,
+        s.shop_name,
+        s.shop_address,
+        s.address_id,
+
+        a.house_number,
+        a.street,
+        a.city,
+        a.state,
+        a.country,
+        a.zip_code
+
+        FROM products p
+
+        INNER JOIN categories c
+
+        ON p.category_id=c.category_id
+
+        INNER JOIN sellers s
+
+        ON p.user_id=s.user_id
+
+        LEFT JOIN address a
+
+        ON s.address_id=a.address_id
+
+        WHERE p.product_id=#{productId}
+
+        AND p.user_id=#{sellerId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Update Product Status -->
+    <!-- ===================================================== -->
+
+    <update id="updateProductStatus">
+
+        UPDATE products
+
+        SET
+
+        product_status=#{productStatus}
+
+        WHERE product_id=#{productId}
+
+    </update>
+
+</mapper>

@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.OrderMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="OrderResultMap"
+               type="com.crimsonlogic.ecommerce.model.Order">
+
+        <id property="orderId"
+            column="order_id"/>
+
+        <result property="quantity"
+                column="quantity"/>
+
+        <result property="totalPrice"
+                column="total_price"/>
+
+        <result property="orderStatus"
+                column="order_status"/>
+
+        <result property="orderDate"
+                column="order_date"/>
+
+        <!-- Customer -->
+
+        <association property="customer"
+                     javaType="com.crimsonlogic.ecommerce.model.Customer">
+
+            <id property="userId"
+                column="customer_id"/>
+
+            <result property="userName"
+                    column="customer_name"/>
+
+            <result property="userEmail"
+                    column="customer_email"/>
+
+            <result property="userPhNo"
+                    column="customer_phone"/>
+
+            <result property="walletBalance"
+                    column="wallet_balance"/>
+
+        </association>
+
+        <!-- Product -->
+
+        <association property="product"
+                     javaType="com.crimsonlogic.ecommerce.model.Product">
+
+            <id property="productId"
+                column="product_id"/>
+
+            <result property="productName"
+                    column="product_name"/>
+
+            <result property="productDescription"
+                    column="product_description"/>
+
+            <result property="productPrice"
+                    column="product_price"/>
+
+            <result property="productStatus"
+                    column="product_status"/>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertOrder">
+
+        INSERT INTO orders(
+
+        order_id,
+
+        user_id,
+
+        product_id,
+
+        quantity,
+
+        total_price,
+
+        order_status,
+
+        order_date
+
+        )
+
+        VALUES(
+
+        #{orderId},
+
+        #{customer.userId},
+
+        #{product.productId},
+
+        #{quantity},
+
+        #{totalPrice},
+
+        #{orderStatus},
+
+        #{orderDate}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updateOrder">
+
+        UPDATE orders
+
+        SET
+
+        quantity=#{quantity},
+
+        total_price=#{totalPrice},
+
+        order_status=#{orderStatus}
+
+        WHERE order_id=#{orderId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Update Status -->
+    <!-- ===================================================== -->
+
+    <update id="updateOrderStatus">
+
+        UPDATE orders
+
+        SET
+
+        order_status=#{orderStatus}
+
+        WHERE order_id=#{orderId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteOrder">
+
+        DELETE FROM orders
+
+        WHERE order_id=#{orderId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findOrderById"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.order_id=#{orderId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Customer Orders -->
+    <!-- ===================================================== -->
+
+    <select id="findOrdersByCustomer"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.user_id=#{customerId}
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Seller Orders -->
+    <!-- ===================================================== -->
+
+    <select id="findOrdersBySeller"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE p.user_id=#{sellerId}
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Orders Without Payment -->
+    <!-- ===================================================== -->
+
+    <select id="findOrdersWithoutPayment"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        LEFT JOIN payments pay
+        ON o.order_id=pay.order_id
+
+        WHERE o.user_id=#{customerId}
+
+        AND pay.order_id IS NULL
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find Orders By Status -->
+    <!-- ===================================================== -->
+
+    <select id="findOrdersByStatus"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.order_status=#{status}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All Orders -->
+    <!-- ===================================================== -->
+
+    <select id="findAllOrders"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+    <select id="findOrdersByCustomerAndProduct"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.user_id=#{customerId}
+
+        AND LOWER(p.product_name)
+        LIKE LOWER(CONCAT('%',#{productName},'%'))
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+    <select id="findOrdersBySellerAndProduct"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE p.user_id=#{sellerId}
+
+        AND LOWER(p.product_name)
+        LIKE LOWER(CONCAT('%',#{productName},'%'))
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+    <select id="findOrderByIdAndCustomer"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.order_id=#{orderId}
+
+        AND o.user_id=#{customerId}
+
+    </select>
+
+    <select id="findOrderByIdAndSeller"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE o.order_id=#{orderId}
+
+        AND p.user_id=#{sellerId}
+
+    </select>
+
+    <select id="findOrdersByKeyword"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id=c.user_id
+
+        INNER JOIN products p
+        ON o.product_id=p.product_id
+
+        WHERE LOWER(c.user_name)
+
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        OR LOWER(p.product_name)
+
+        LIKE LOWER(CONCAT('%',#{keyword},'%'))
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
+</mapper>

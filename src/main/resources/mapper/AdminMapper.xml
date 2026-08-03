@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.AdminMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="AdminResultMap"
+               type="com.crimsonlogic.ecommerce.model.Admin">
+
+        <id property="userId"
+            column="user_id"/>
+
+        <result property="userName"
+                column="user_name"/>
+
+        <result property="userEmail"
+                column="user_email"/>
+
+        <result property="userPhNo"
+                column="user_phone"/>
+
+        <result property="userPassword"
+                column="user_password"/>
+
+        <association property="address"
+                     javaType="com.crimsonlogic.ecommerce.model.Address">
+
+            <id property="addressId"
+                column="address_id"/>
+
+            <result property="houseNumber"
+                    column="house_number"/>
+
+            <result property="street"
+                    column="street"/>
+
+            <result property="city"
+                    column="city"/>
+
+            <result property="state"
+                    column="state"/>
+
+            <result property="country"
+                    column="country"/>
+
+            <result property="zipCode"
+                    column="zip_code"/>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertAdmin">
+
+        INSERT INTO admins(
+
+        user_id,
+
+        user_name,
+
+        user_email,
+
+        user_phone,
+
+        user_password,
+
+        address_id
+
+        )
+
+        VALUES(
+
+        #{userId},
+
+        #{userName},
+
+        #{userEmail},
+
+        #{userPhNo},
+
+        #{userPassword},
+
+        #{address.addressId}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updateAdmin">
+
+        UPDATE admins
+
+        SET
+
+        user_name = #{userName},
+
+        user_email = #{userEmail},
+
+        user_phone = #{userPhNo},
+
+        user_password = #{userPassword},
+
+        address_id = #{address.addressId}
+
+        WHERE user_id = #{userId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteAdmin">
+
+        DELETE FROM admins
+
+        WHERE user_id = #{userId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findAdminById"
+            resultMap="AdminResultMap">
+
+        SELECT
+
+        a.*,
+
+        ad.*
+
+        FROM admins a
+
+        LEFT JOIN address ad
+
+        ON a.address_id = ad.address_id
+
+        WHERE a.user_id = #{userId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Email -->
+    <!-- ===================================================== -->
+
+    <select id="findAdminByEmail"
+            resultMap="AdminResultMap">
+
+        SELECT
+
+        a.*,
+
+        ad.*
+
+        FROM admins a
+
+        LEFT JOIN address ad
+
+        ON a.address_id = ad.address_id
+
+        WHERE a.user_email = #{email}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All -->
+    <!-- ===================================================== -->
+
+    <select id="findAllAdmins"
+            resultMap="AdminResultMap">
+
+        SELECT
+
+        a.*,
+
+        ad.*
+
+        FROM admins a
+
+        LEFT JOIN address ad
+
+        ON a.address_id = ad.address_id
+
+        ORDER BY a.user_name
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Phone -->
+    <!-- ===================================================== -->
+
+    <select id="findAdminByPhone"
+            resultMap="AdminResultMap">
+
+        SELECT
+        a.*,
+        ad.*
+
+        FROM admins a
+
+        LEFT JOIN address ad
+        ON a.address_id = ad.address_id
+
+        WHERE a.user_phone = #{phone}
+
+    </select>
+
+</mapper>

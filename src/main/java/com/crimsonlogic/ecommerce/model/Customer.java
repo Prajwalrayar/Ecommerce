@@ -15,6 +15,17 @@ import java.util.List;
  */
 public class Customer extends User {
 
+    private double walletBalance;
+
+    public double getWalletBalance() {
+        return walletBalance;
+    }
+
+    public void setWalletBalance(double walletBalance) {
+        this.walletBalance = walletBalance;
+    }
+
+
     /**
      * Default Constructor.
      * Required by MyBatis.
@@ -38,7 +49,8 @@ public class Customer extends User {
                     String userEmail,
                     String userPhNo,
                     String userPassword,
-                    Address address) {
+                    Address address,
+                    double walletBalance) {
 
         super(userId,
                 userName,
@@ -48,6 +60,7 @@ public class Customer extends User {
                 address);
 
         setRole(Role.CUSTOMER);
+        this.walletBalance = walletBalance;
 
     }
 
@@ -58,7 +71,21 @@ public class Customer extends User {
      */
     @Override
     public List<String[]> getTableRows() {
-        return super.getTableRows();
+
+        List<String[]> rows = super.getTableRows();
+
+        rows.add(new String[]{
+
+                "Wallet Balance",
+
+                String.format(
+                        "%.2f",
+                        walletBalance)
+
+        });
+
+        return rows;
+
     }
 
 }

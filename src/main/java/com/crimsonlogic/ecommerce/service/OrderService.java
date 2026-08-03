@@ -1,13 +1,10 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.*;
 import com.crimsonlogic.ecommerce.enums.OrderStatus;
-import com.crimsonlogic.ecommerce.model.Cart;
-import com.crimsonlogic.ecommerce.model.Customer;
-import com.crimsonlogic.ecommerce.model.Inventory;
-import com.crimsonlogic.ecommerce.model.Order;
-import com.crimsonlogic.ecommerce.model.Product;
-import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
+import com.crimsonlogic.ecommerce.enums.PaymentMethod;
+import com.crimsonlogic.ecommerce.enums.PaymentStatus;
+import com.crimsonlogic.ecommerce.model.*;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -31,28 +28,94 @@ public class OrderService {
     private final InventoryService inventoryService;
 
     /**
+     * Cart DAO.
+     */
+    private final CartDAO cartDAO;
+
+    /**
+     * Order DAO.
+     */
+    private final OrderDAO orderDAO;
+
+   // Inventory DAO.
+
+    private final InventoryDAO inventoryDAO;
+
+    /**
+     * Payment DAO.
+     */
+    private final PaymentDAO paymentDAO;
+
+    private final ProductDAO productDAO = new ProductDAO();
+
+    // Customer Order Table Headers.
+
+    private static final String[] CUSTOMER_HEADERS = {
+            "Tracking No",
+            "Product",
+            "Quantity",
+            "Amount",
+            "Status",
+            "Order Date"
+    };
+
+    // Seller Order Table Headers.
+
+    private static final String[] SELLER_HEADERS = {
+            "Tracking No",
+            "Customer",
+            "Product",
+            "Quantity",
+            "Amount",
+            "Status"
+    };
+
+    /**
+     * Admin Order Table Headers.
+     */
+    private static final String[] ADMIN_HEADERS = {
+            "Tracking No",
+            "Customer",
+            "Seller",
+            "Product",
+            "Quantity",
+            "Amount",
+            "Status"
+    };
+
+    /**
      * Default Constructor.
      */
-    public OrderService(
-            CartService cartService,
-            InventoryService inventoryService) {
+    public OrderService() {
 
-        this.cartService = cartService;
-        this.inventoryService = inventoryService;
+        this.cartService =
+                new CartService();
+
+        this.inventoryService =
+                new InventoryService();
+
+        this.cartDAO =
+                new CartDAO();
+
+        this.orderDAO =
+                new OrderDAO();
+
+        this.inventoryDAO =
+                new InventoryDAO();
+
+        this.paymentDAO =
+                new PaymentDAO();
 
     }
 
     /**
      * Places Order.
      *
-     * @param customer Logged-in Customer
+     * @param customer Customer
      */
     public void placeOrder(Customer customer) {
 
-        if (!hasCart(customer)) {
-
-            DisplayUtil.printMessage(
-                    "Your Cart is Empty.");
+        if (!validateCustomerCart(customer)) {
 
             return;
 
@@ -61,7 +124,7 @@ public class OrderService {
         cartService.viewCart(customer);
 
         Cart cart =
-                getCustomerCartOrNull(customer);
+                selectCustomerCart(customer);
 
         if (cart == null) {
 
@@ -73,102 +136,49 @@ public class OrderService {
 
     }
 
-    /**
-     * Displays Customer Orders.
-     *
-     * @param customer Logged-in Customer
-     */
-    /**
-     * Displays Customer Orders.
-     *
-     * @param customer Logged-in Customer
-     */
+    // Displays Customer Orders.
+
     public void viewOrders(Customer customer) {
 
-        List<Order> orders =
-                DataStore.ORDERS.values()
+        displayCustomerOrders(
 
-                        .stream()
+                orderDAO.findOrdersByCustomer(
+                        customer.getUserId()),
 
-                        .filter(order ->
-                                order.getCustomer()
-                                        .equals(customer))
+                "MY ORDERS"
 
-                        .toList();
-
-        if (orders.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        String[] headers = {
-
-                "Tracking No",
-
-                "Product",
-
-                "Quantity",
-
-                "Amount",
-
-                "Status",
-
-                "Order Date"
-
-        };
-
-        DisplayUtil.printTable(
-
-                "MY ORDERS",
-
-                headers,
-
-                buildCustomerOrderRows(orders));
+        );
 
     }
 
     /**
      * Tracks Customer Order.
      *
-     * @param customer Logged-in Customer
+     * @param customer Customer
      */
     public void trackOrder(Customer customer) {
 
-        if (!hasOrders(customer)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateCustomerOrders(customer)) {
 
             return;
 
         }
 
-        Order order =
-                getCustomerOrderOrNull(customer);
+        trackOrderDetails(
 
-        if (order != null) {
+                getCustomerOrderOrNull(customer)
 
-            displayOrder(order);
-
-        }
+        );
 
     }
-
     /**
      * Cancels Order.
      *
-     * @param customer Logged-in Customer
+     * @param customer Customer
      */
     public void cancelOrder(Customer customer) {
 
-        if (!hasOrders(customer)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateCustomerOrders(customer)) {
 
             return;
 
@@ -176,16 +186,29 @@ public class OrderService {
 
         viewOrders(customer);
 
-        Order order =
-                getCustomerOrderOrNull(customer);
+        cancelExistingOrder(
 
-        if (order == null) {
+                getCustomerOrderOrNull(customer)
 
-            return;
+        );
 
-        }
+    }
 
-        cancelExistingOrder(order);
+    /**
+     * Displays Seller Orders.
+     *
+     * @param seller Seller
+     */
+    public void viewSellerOrders(Seller seller) {
+
+        displaySellerOrders(
+
+                orderDAO.findOrdersBySeller(
+                        seller.getUserId()),
+
+                "MY ORDERS"
+
+        );
 
     }
 
@@ -200,20 +223,9 @@ public class OrderService {
                 inventoryService.findInventoryByProduct(
                         cart.getProduct());
 
-        if (inventory == null) {
-
-            DisplayUtil.printMessage(
-                    "Inventory Not Available.");
-
-            return;
-
-        }
-
-        if (inventory.getQuantity()
-                < cart.getQuantity()) {
-
-            DisplayUtil.printMessage(
-                    "Insufficient Stock.");
+        if (!validateInventory(
+                inventory,
+                cart.getQuantity())) {
 
             return;
 
@@ -234,22 +246,18 @@ public class OrderService {
 
                         OrderStatus.PLACED,
 
-                        LocalDateTime.now());
+                        LocalDateTime.now()
 
-        DataStore.ORDERS.put(
+                );
 
-                order.getOrderId(),
-
+        orderDAO.insertOrder(
                 order);
 
-        inventory.setQuantity(
+        updateInventory(
+                inventory,
+                -cart.getQuantity());
 
-                inventory.getQuantity()
-
-                        - cart.getQuantity());
-
-        DataStore.CARTS.remove(
-
+        cartDAO.deleteCartItem(
                 cart.getCartId());
 
         DisplayUtil.printSuccess(
@@ -268,36 +276,7 @@ public class OrderService {
      */
     private void cancelExistingOrder(Order order) {
 
-        if (order.getOrderStatus()
-                == OrderStatus.SHIPPED
-
-                ||
-
-                order.getOrderStatus()
-                        == OrderStatus.IN_TRANSIT
-
-                ||
-
-                order.getOrderStatus()
-                        == OrderStatus.OUT_FOR_DELIVERY
-
-                ||
-
-                order.getOrderStatus()
-                        == OrderStatus.DELIVERED) {
-
-            DisplayUtil.printMessage(
-                    "Order Cannot Be Cancelled.");
-
-            return;
-
-        }
-
-        if (order.getOrderStatus()
-                == OrderStatus.CANCELLED) {
-
-            DisplayUtil.printMessage(
-                    "Order Already Cancelled.");
+        if (!validateCancellation(order)) {
 
             return;
 
@@ -306,17 +285,18 @@ public class OrderService {
         order.setOrderStatus(
                 OrderStatus.CANCELLED);
 
+        orderDAO.updateOrderStatus(
+                order);
+
         Inventory inventory =
                 inventoryService.findInventoryByProduct(
                         order.getProduct());
 
         if (inventory != null) {
 
-            inventory.setQuantity(
-
-                    inventory.getQuantity()
-
-                            + order.getQuantity());
+            updateInventory(
+                    inventory,
+                    order.getQuantity());
 
         }
 
@@ -325,29 +305,194 @@ public class OrderService {
 
     }
 
+    /**
+     * Tracks Seller Order.
+     *
+     * @param seller Seller
+     */
+    public void trackOrder(Seller seller) {
+
+        if (!validateSellerOrders(
+                seller)) {
+
+            return;
+
+        }
+
+        viewSellerOrders(
+                seller);
+
+        displayOrderDetails(
+
+                getSellerOrderOrNull(
+                        seller)
+
+        );
+
+    }
 
     /**
-     * Displays Seller Orders.
+     * Displays Order Details.
      *
-     * @param seller Logged-in Seller
+     * @param order Order
      */
+    private void displayOrderDetails(Order order) {
+
+        if (order == null) {
+
+            return;
+
+        }
+
+        displayOrder(order);
+
+    }
+
     /**
-     * Displays Seller Orders.
+     * Validates Inventory.
      *
-     * @param seller Logged-in Seller
+     * @param inventory Inventory
+     * @param quantity Quantity
+     * @return true if valid
      */
-    public void viewSellerOrders(Seller seller) {
+    private boolean validateInventory(Inventory inventory, int quantity) {
 
-        List<Order> orders = DataStore.ORDERS.values()
+        if (inventory == null) {
 
-                .stream()
+            DisplayUtil.printMessage(
+                    "Inventory Not Available.");
 
-                .filter(order ->
-                        order.getProduct()
-                                .getSeller()
-                                .equals(seller))
+            return false;
 
-                .toList();
+        }
+
+        if (inventory.getQuantity()
+                < quantity) {
+
+            DisplayUtil.printMessage(
+                    "Insufficient Stock.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Updates Inventory Quantity.
+     *
+     * @param inventory Inventory
+     * @param quantity Quantity
+     */
+    private void updateInventory(Inventory inventory, int quantity) {
+
+        inventory.setQuantity(
+
+                inventory.getQuantity()
+                        + quantity
+
+        );
+
+        inventoryDAO.updateInventory(
+                inventory);
+
+    }
+
+    /**
+     * Validates Order Cancellation.
+     *
+     * @param order Order
+     * @return true if order can be cancelled
+     */
+    private boolean validateCancellation(Order order) {
+
+        switch (order.getOrderStatus()) {
+
+            case SHIPPED:
+
+            case IN_TRANSIT:
+
+            case OUT_FOR_DELIVERY:
+
+            case DELIVERED:
+
+                DisplayUtil.printMessage(
+                        "Order Cannot Be Cancelled.");
+
+                return false;
+
+            case CANCELLED:
+
+                DisplayUtil.printMessage(
+                        "Order Already Cancelled.");
+
+                return false;
+
+            default:
+
+                return true;
+
+        }
+
+    }
+
+    /**
+     * Returns Customer Cart.
+     *
+     * @param customer Customer
+     * @return Cart
+     */
+    private Cart selectCustomerCart(Customer customer) {
+
+        String productName =
+                InputUtil.readString(
+                                "Enter Product Name : ")
+                        .trim();
+
+        Product product =
+                productDAO.findProductByName(
+                        productName);
+
+        if (product == null) {
+
+            DisplayUtil.printMessage(
+                    "Product Not Found.");
+
+            return null;
+
+        }
+
+        Cart cart =
+                cartDAO.findCartItem(
+
+                        customer.getUserId(),
+
+                        product.getProductId()
+
+                );
+
+        if (cart == null) {
+
+            DisplayUtil.printMessage(
+                    "Cart Item Not Found.");
+
+        }
+
+        return cart;
+
+    }
+
+    /**
+     * Displays Customer Orders.
+     *
+     * @param orders Order List
+     * @param title Table Title
+     */
+    private void displayCustomerOrders(
+            List<Order> orders,
+            String title) {
 
         if (orders.isEmpty()) {
 
@@ -360,127 +505,27 @@ public class OrderService {
 
         DisplayUtil.printTable(
 
-                "MY ORDERS",
+                title,
 
-                new String[]{
+                CUSTOMER_HEADERS,
 
-                        "Tracking No",
+                buildCustomerOrderRows(
+                        orders)
 
-                        "Customer",
-
-                        "Product",
-
-                        "Quantity",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildSellerOrderRows(orders));
+        );
 
     }
-
     /**
-     * Tracks Seller Order.
+     * Displays Seller Orders.
      *
-     * @param seller Logged-in Seller
+     * @param orders Order List
+     * @param title Table Title
      */
-    public void trackOrder(Seller seller) {
+    private void displaySellerOrders(
+            List<Order> orders,
+            String title) {
 
-        if (!hasSellerOrders(seller)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        viewSellerOrders(seller);
-
-        Order order =
-                getSellerOrderOrNull(seller);
-
-        if (order != null) {
-
-            displayOrder(order);
-
-        }
-
-    }
-
-    /**
-     * Confirms Order.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void confirmOrder(Seller seller) {
-
-        if (!hasSellerOrders(seller)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        viewSellerOrders(seller);
-
-        Order order =
-                getSellerOrderOrNull(seller);
-
-        if (order == null) {
-
-            return;
-
-        }
-
-        confirmExistingOrder(order);
-
-    }
-
-    /**
-     * Updates Order Status.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void updateOrderStatus(Seller seller) {
-
-        if (!hasSellerOrders(seller)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        viewSellerOrders(seller);
-
-        Order order =
-                getSellerOrderOrNull(seller);
-
-        if (order == null) {
-
-            return;
-
-        }
-
-        updateExistingOrderStatus(order);
-
-    }
-    /**
-     * Displays All Orders.
-     */
-    /**
-     * Displays All Orders.
-     */
-    public void viewAllOrders() {
-
-        if (DataStore.ORDERS.isEmpty()) {
+        if (orders.isEmpty()) {
 
             DisplayUtil.printMessage(
                     "No Orders Found.");
@@ -491,33 +536,170 @@ public class OrderService {
 
         DisplayUtil.printTable(
 
-                "ALL ORDERS",
+                title,
 
-                new String[]{
+                SELLER_HEADERS,
 
-                        "Tracking No",
+                buildSellerOrderRows(
+                        orders)
 
-                        "Customer",
+        );
 
-                        "Seller",
+    }
+    /**
+     * Displays All Orders.
+     *
+     * @param orders Order List
+     * @param title Table Title
+     */
+    private void displayAdminOrders(
+            List<Order> orders,
+            String title) {
 
-                        "Product",
+        if (orders.isEmpty()) {
 
-                        "Quantity",
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
 
-                        "Amount",
+            return;
 
-                        "Status"
+        }
 
-                },
+        DisplayUtil.printTable(
+
+                title,
+
+                ADMIN_HEADERS,
 
                 buildAdminOrderRows(
+                        orders)
 
-                        DataStore.ORDERS.values()
+        );
 
-                                .stream()
+    }
+    /**
+     * Displays Order Details.
+     *
+     * @param order Order
+     */
+    private void trackOrderDetails(
+            Order order) {
 
-                                .toList()));
+        if (order == null) {
+
+            return;
+
+        }
+
+        displayOrder(order);
+
+    }
+
+    /**
+     * Validates Customer Cart.
+     *
+     * @param customer Customer
+     * @return true if Cart exists
+     */
+    private boolean validateCustomerCart(
+            Customer customer) {
+
+        if (cartDAO.findCartByCustomer(
+                customer.getUserId()).isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "Your Cart is Empty.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Customer Orders.
+     *
+     * @param customer Customer
+     * @return true if Orders exist
+     */
+    private boolean validateCustomerOrders(
+            Customer customer) {
+
+        if (orderDAO.findOrdersByCustomer(
+                customer.getUserId()).isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Seller Orders.
+     *
+     * @param seller Seller
+     * @return true if Orders exist
+     */
+    private boolean validateSellerOrders(Seller seller) {
+
+        if (orderDAO.findOrdersBySeller(
+                seller.getUserId()).isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    // Confirms Order.
+    public void confirmOrder(Seller seller) {
+        if (!validateSellerOrders(seller)) {
+            return;
+        }
+        viewSellerOrders(seller);
+        Order order = getSellerOrderOrNull(seller);
+        if (order == null) {
+            return;
+        }
+        confirmExistingOrder(order);
+    }
+
+    // Updates Order Status.
+
+    public void updateOrderStatus(Seller seller) {
+        if (!validateSellerOrders(seller)) {
+            return;
+        }
+        viewSellerOrders(seller);
+        Order order = getSellerOrderOrNull(seller);
+        if (order == null) {
+            return;
+        }
+        updateExistingOrderStatus(order);
+    }
+    // Displays All Orders.
+
+    public void viewAllOrders() {
+
+        displayAdminOrders(
+
+                orderDAO.findAllOrders(),
+
+                "ALL ORDERS"
+
+        );
 
     }
 
@@ -526,10 +708,7 @@ public class OrderService {
      */
     public void trackOrder() {
 
-        if (DataStore.ORDERS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateOrders()) {
 
             return;
 
@@ -537,13 +716,11 @@ public class OrderService {
 
         viewAllOrders();
 
-        Order order = getOrderOrNull();
+        trackOrderDetails(
 
-        if (order != null) {
+                getOrderOrNull()
 
-            displayOrder(order);
-
-        }
+        );
 
     }
 
@@ -552,10 +729,7 @@ public class OrderService {
      */
     public void confirmOrder() {
 
-        if (DataStore.ORDERS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateOrders()) {
 
             return;
 
@@ -563,15 +737,11 @@ public class OrderService {
 
         viewAllOrders();
 
-        Order order = getOrderOrNull();
+        confirmExistingOrder(
 
-        if (order == null) {
+                getOrderOrNull()
 
-            return;
-
-        }
-
-        confirmExistingOrder(order);
+        );
 
     }
 
@@ -579,11 +749,18 @@ public class OrderService {
      * Updates Order Status.
      */
     public void updateOrderStatus() {
+        if (!validateOrders()) {
+            return;
+        }
+        viewAllOrders();
+        updateOrderStatusDetails(getOrderOrNull());
+    }
 
-        if (DataStore.ORDERS.isEmpty()) {
+    //* Deletes Order.
 
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+    public void deleteOrder() {
+
+        if (!validateOrders()) {
 
             return;
 
@@ -591,7 +768,17 @@ public class OrderService {
 
         viewAllOrders();
 
-        Order order = getOrderOrNull();
+        deleteExistingOrder(
+
+                getOrderOrNull()
+
+        );
+
+    }
+
+    // Updates Order Status.
+
+    private void updateOrderStatusDetails(Order order) {
 
         if (order == null) {
 
@@ -603,23 +790,9 @@ public class OrderService {
 
     }
 
-    /**
-     * Deletes Order.
-     */
-    public void deleteOrder() {
+    // Deletes Existing Order.
 
-        if (DataStore.ORDERS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        viewAllOrders();
-
-        Order order = getOrderOrNull();
+    private void deleteExistingOrder(Order order) {
 
         if (order == null) {
 
@@ -627,7 +800,7 @@ public class OrderService {
 
         }
 
-        DataStore.ORDERS.remove(
+        orderDAO.deleteOrder(
                 order.getOrderId());
 
         DisplayUtil.printSuccess(
@@ -635,6 +808,23 @@ public class OrderService {
 
     }
 
+    // Validates Orders.
+
+    private boolean validateOrders() {
+
+        if (orderDAO.findAllOrders()
+                .isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
     /**
      * Confirms Existing Order.
      *
@@ -652,11 +842,36 @@ public class OrderService {
 
         }
 
-        order.setOrderStatus(
-                OrderStatus.CONFIRMED);
+        Payment payment =
+                getPaymentByOrder(order);
 
-        DisplayUtil.printSuccess(
-                "Order Confirmed Successfully.");
+        if (payment == null) {
+
+            DisplayUtil.printMessage(
+                    "Payment Pending.");
+
+            return;
+
+        }
+
+        if (payment.getPaymentStatus()
+                != PaymentStatus.SUCCESS
+
+                &&
+
+                payment.getPaymentMethod()
+                        != PaymentMethod.CASH_ON_DELIVERY) {
+
+            DisplayUtil.printMessage(
+                    "Payment Not Completed.");
+
+            return;
+
+        }
+
+        order.setOrderStatus(OrderStatus.CONFIRMED);
+        orderDAO.updateOrderStatus(order);
+        DisplayUtil.printSuccess("Order Confirmed Successfully.");
 
     }
 
@@ -702,6 +917,7 @@ public class OrderService {
                 DisplayUtil.printMessage(
                         "Order Already Delivered.");
 
+
                 return;
 
             case CANCELLED:
@@ -720,94 +936,39 @@ public class OrderService {
 
         }
 
+        orderDAO.updateOrderStatus(order);
+
         DisplayUtil.printSuccess(
                 "Order Status Updated Successfully.");
 
     }
-    /**
-     * Checks whether Customer has Cart.
-     *
-     * @param customer Logged-in Customer
-     * @return true if Cart exists
-     */
-    private boolean hasCart(Customer customer) {
 
-        return DataStore.CARTS.values()
-
-                .stream()
-
-                .anyMatch(cart ->
-                        cart.getCustomer()
-                                .equals(customer));
-
-    }
-
-    /**
-     * Checks whether Customer has Orders.
-     *
-     * @param customer Logged-in Customer
-     * @return true if Orders exist
-     */
-    private boolean hasOrders(Customer customer) {
-
-        return DataStore.ORDERS.values()
-
-                .stream()
-
-                .anyMatch(order ->
-                        order.getCustomer()
-                                .equals(customer));
-
-    }
-
-    /**
-     * Checks whether Seller has Orders.
-     *
-     * @param seller Logged-in Seller
-     * @return true if Orders exist
-     */
-    private boolean hasSellerOrders(Seller seller) {
-
-        return DataStore.ORDERS.values()
-
-                .stream()
-
-                .anyMatch(order ->
-                        order.getProduct()
-                                .getSeller()
-                                .equals(seller));
-
-    }
-
-    /**
-     * Returns Customer Cart.
-     *
-     * @param customer Logged-in Customer
-     * @return Cart
-     */
-    private Cart getCustomerCartOrNull(Customer customer) {
+    // Returns Customer Cart.
+    private Cart getCustomerCartOrNull(
+            Customer customer) {
 
         String productName =
                 InputUtil.readString(
                                 "Enter Product Name : ")
                         .trim();
 
-        Cart cart = DataStore.CARTS.values()
+        Product product =
+                productDAO.findProductByName(
+                        productName);
 
-                .stream()
+        if (product == null) {
 
-                .filter(item ->
-                        item.getCustomer()
-                                .equals(customer))
+            DisplayUtil.printMessage(
+                    "Product Not Found.");
 
-                .filter(item ->
-                        item.getProduct()
-                                .getProductName()
-                                .equalsIgnoreCase(productName))
+            return null;
 
-                .findFirst()
+        }
 
-                .orElse(null);
+        Cart cart =
+                cartDAO.findCartItem(
+                        customer.getUserId(),
+                        product.getProductId());
 
         if (cart == null) {
 
@@ -834,21 +995,14 @@ public class OrderService {
                                 "Enter Tracking Number : ")
                         .trim();
 
-        Order order = DataStore.ORDERS.values()
+        Order order =
+                orderDAO.findOrderByIdAndCustomer(
 
-                .stream()
+                        trackingNumber,
 
-                .filter(item ->
-                        item.getOrderId()
-                                .equals(trackingNumber))
+                        customer.getUserId()
 
-                .filter(item ->
-                        item.getCustomer()
-                                .equals(customer))
-
-                .findFirst()
-
-                .orElse(null);
+                );
 
         if (order == null) {
 
@@ -861,35 +1015,23 @@ public class OrderService {
 
     }
 
-    /**
-     * Returns Seller Order.
-     *
-     * @param seller Logged-in Seller
-     * @return Order
-     */
-    private Order getSellerOrderOrNull(Seller seller) {
+    // Returns Seller Order.
+    private Order getSellerOrderOrNull(
+            Seller seller) {
 
         String trackingNumber =
                 InputUtil.readString(
                                 "Enter Tracking Number : ")
                         .trim();
 
-        Order order = DataStore.ORDERS.values()
+        Order order =
+                orderDAO.findOrderByIdAndSeller(
 
-                .stream()
+                        trackingNumber,
 
-                .filter(item ->
-                        item.getOrderId()
-                                .equals(trackingNumber))
+                        seller.getUserId()
 
-                .filter(item ->
-                        item.getProduct()
-                                .getSeller()
-                                .equals(seller))
-
-                .findFirst()
-
-                .orElse(null);
+                );
 
         if (order == null) {
 
@@ -912,7 +1054,7 @@ public class OrderService {
                         .trim();
 
         Order order =
-                DataStore.ORDERS.get(
+                orderDAO.findOrderById(
                         trackingNumber);
 
         if (order == null) {
@@ -927,16 +1069,10 @@ public class OrderService {
     }
 
     // Searches Customer Orders.
-
     public void searchOrder(Customer customer) {
 
-        if (!hasOrders(customer)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
+        if (!validateCustomerOrders(customer)) {
             return;
-
         }
 
         String productName =
@@ -944,60 +1080,26 @@ public class OrderService {
                                 "Enter Product Name : ")
                         .trim();
 
-        List<Order> orders =
-                DataStore.ORDERS.values()
+        displayCustomerOrders(
 
-                        .stream()
+                orderDAO.findOrdersByCustomerAndProduct(
 
-                        .filter(order ->
-                                order.getCustomer()
-                                        .equals(customer))
+                        customer.getUserId(),
 
-                        .filter(order ->
-                                order.getProduct()
-                                        .getProductName()
-                                        .equalsIgnoreCase(productName))
+                        productName
 
-                        .toList();
+                ),
 
-        if (orders.isEmpty()) {
+                "SEARCH RESULT"
 
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        DisplayUtil.printTable(
-
-                "SEARCH RESULT",
-
-                new String[]{
-
-                        "Tracking No",
-
-                        "Product",
-
-                        "Quantity",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildCustomerOrderRows(orders));
+        );
 
     }
 
     // Searches Seller Orders.
     public void searchOrder(Seller seller) {
 
-        if (!hasSellerOrders(seller)) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateSellerOrders(seller)) {
 
             return;
 
@@ -1008,63 +1110,26 @@ public class OrderService {
                                 "Enter Product Name : ")
                         .trim();
 
-        List<Order> orders =
-                DataStore.ORDERS.values()
+        displaySellerOrders(
 
-                        .stream()
+                orderDAO.findOrdersBySellerAndProduct(
 
-                        .filter(order ->
-                                order.getProduct()
-                                        .getSeller()
-                                        .equals(seller))
+                        seller.getUserId(),
 
-                        .filter(order ->
-                                order.getProduct()
-                                        .getProductName()
-                                        .equalsIgnoreCase(productName))
+                        productName
 
-                        .toList();
+                ),
 
-        if (orders.isEmpty()) {
+                "SEARCH RESULT"
 
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        DisplayUtil.printTable(
-
-                "SEARCH RESULT",
-
-                new String[]{
-
-                        "Tracking No",
-
-                        "Customer",
-
-                        "Product",
-
-                        "Quantity",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildSellerOrderRows(orders));
+        );
 
     }
 
     // Searches Orders.
     public void searchOrder() {
 
-        if (DataStore.ORDERS.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
+        if (!validateOrders()) {
 
             return;
 
@@ -1075,57 +1140,23 @@ public class OrderService {
                                 "Enter Customer/Product Name : ")
                         .trim();
 
-        List<Order> orders =
-                DataStore.ORDERS.values()
+        displayAdminOrders(
 
-                        .stream()
+                orderDAO.findOrdersByKeyword(
+                        keyword),
 
-                        .filter(order ->
+                "SEARCH RESULT"
 
-                                order.getCustomer()
-                                        .getUserName()
-                                        .equalsIgnoreCase(keyword)
+        );
 
-                                        ||
+    }
 
-                                        order.getProduct()
-                                                .getProductName()
-                                                .equalsIgnoreCase(keyword))
+    // Returns Payment of an Order.
 
-                        .toList();
+    private Payment getPaymentByOrder(Order order) {
 
-        if (orders.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Orders Found.");
-
-            return;
-
-        }
-
-        DisplayUtil.printTable(
-
-                "SEARCH RESULT",
-
-                new String[]{
-
-                        "Tracking No",
-
-                        "Customer",
-
-                        "Seller",
-
-                        "Product",
-
-                        "Quantity",
-
-                        "Amount",
-
-                        "Status"
-
-                },
-
-                buildAdminOrderRows(orders));
+        return paymentDAO.findPaymentByOrder(
+                order.getOrderId());
 
     }
 
@@ -1138,12 +1169,11 @@ public class OrderService {
         do {
 
             trackingNumber =
-                    IdGenerator.generateId("");
+                    IdGenerator.generateId("TRK");
 
         }
 
-        while (DataStore.ORDERS.containsKey(
-                trackingNumber));
+        while(orderDAO.findOrderById(trackingNumber)!=null);
 
         return trackingNumber;
 

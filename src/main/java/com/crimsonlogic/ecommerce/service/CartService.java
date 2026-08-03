@@ -1,12 +1,13 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CartDAO;
+import com.crimsonlogic.ecommerce.dao.InventoryDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Cart;
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Inventory;
 import com.crimsonlogic.ecommerce.model.Product;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -19,126 +20,251 @@ import java.util.List;
  */
 public class CartService {
 
-    private final ProductService productService;
+    private final ProductService productService =
+            new ProductService();
 
-    private final InventoryService inventoryService;
+    private final InventoryService inventoryService =
+            new InventoryService();
+
+    private final CartDAO cartDAO =
+            new CartDAO();
+
+    private final InventoryDAO inventoryDAO =
+            new InventoryDAO();
+
+    private static final String[] CART_HEADERS = {
+
+            "Cart ID",
+
+            "Product Name",
+
+            "Category",
+
+            "Quantity",
+
+            "Price",
+
+            "Total"
+
+    };
 
     /**
-     * Default Constructor.
-     */
-    public CartService() {
-
-        productService = new ProductService();
-        inventoryService = new InventoryService();
-
-    }
-
-    /**
-     * Adds Product to Cart.
+     * Adds Product To Cart.
      *
-     * @param customer Logged-in Customer
+     * @param customer Customer
      */
     public void addToCart(Customer customer) {
 
-        boolean available = DataStore.INVENTORIES.values()
-                .stream()
-                .anyMatch(inventory -> inventory.getQuantity() > 0);
-
-        if (!available) {
-
-            DisplayUtil.printMessage(
-                    "No Products Available.");
+        if (!validateAvailableProducts()) {
 
             return;
 
         }
+
         productService.browseProducts();
 
         Product product = getProductOrNull();
 
-        if (product != null) {
+        if (product == null) {
 
-            createCart(customer, product);
+            return;
 
         }
+
+        createCart(customer, product);
 
     }
 
     /**
+     * Displays Customer Cart.
+     *
+     * @param customer Customer
+     */
+    public void viewCart(Customer customer) {
+
+        List<Cart> carts =
+                getCustomerCart(customer);
+
+        if (carts.isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "Your Cart is Empty.");
+
+            return;
+
+        }
+
+        DisplayUtil.printTable(
+
+                "MY CART",
+
+                CART_HEADERS,
+
+                buildCartRows(carts)
+
+        );
+
+        System.out.printf(
+
+                "Grand Total : ₹%.2f%n",
+
+                calculateGrandTotal(carts)
+
+        );
+
+    }
+
+    /**
+     * Updates Cart Quantity.
+     *
+     * @param customer Customer
+     */
+    public void updateQuantity(Customer customer) {
+
+        Cart cart =
+                selectCustomerCart(customer);
+
+        if (cart == null) {
+
+            return;
+
+        }
+
+        updateCart(cart);
+
+    }
+
+    /**
+     * Removes Cart Item.
+     *
+     * @param customer Customer
+     */
+    public void removeItem(Customer customer) {
+
+        Cart cart =
+                selectCustomerCart(customer);
+
+        if (cart == null) {
+
+            return;
+
+        }
+
+        removeCart(cart);
+
+    }
+
+    /**
+     * Clears Customer Cart.
+     *
+     * @param customer Customer
+     */
+    public void clearCart(Customer customer) {
+
+        if (!validateCart(customer)) {
+
+            return;
+
+        }
+
+        cartDAO.clearCart(customer.getUserId());
+
+        DisplayUtil.printSuccess(
+                "Cart Cleared Successfully.");
+
+    }
+    /**
      * Creates Cart.
      *
      * @param customer Customer
-     * @param product  Product
+     * @param product Product
      */
-    private void createCart(Customer customer, Product product) {
+    private void createCart(
+            Customer customer,
+            Product product) {
 
         while (true) {
 
             try {
 
-                Inventory inventory = inventoryService.findInventoryByProduct(product);
+                Inventory inventory =
+                        getInventory(product);
 
-                if (inventory == null) {
-
-                    DisplayUtil.printMessage("Inventory Not Found.");
-
-                    return;
-
-                }
-
-                if (product.getProductStatus() == ProductStatus.OUT_OF_STOCK) {
-
-                    DisplayUtil.printMessage("Product is Out of Stock.");
+                if (!validateInventory(
+                        inventory,
+                        product)) {
 
                     return;
 
                 }
 
-                int quantity = InputUtil.readInt("Enter Quantity : ");
+                int quantity =
+                        InputUtil.readInt(
+                                "Enter Quantity : ");
 
-                ValidationUtil.validateQuantity(quantity);
+                ValidationUtil.validateQuantity(
+                        quantity);
 
-                if (quantity > inventory.getQuantity()) {
+                Cart existingCart =
+                        cartDAO.findCartItem(
 
-                    DisplayUtil.printMessage("Only " + inventory.getQuantity() + " item(s) available.");
+                                customer.getUserId(),
 
-                    return;
+                                product.getProductId()
 
-                }
+                        );
 
-                Cart cart = isProductAlreadyInCart(customer, product);
+                if (existingCart != null) {
 
-                if (cart != null) {
+                    saveExistingCart(
 
-                    int totalQuantity = cart.getQuantity() + quantity;
+                            existingCart,
 
-                    if (totalQuantity > inventory.getQuantity()) {
+                            inventory,
 
-                        DisplayUtil.printMessage("Only " + inventory.getQuantity() + " item(s) available.");
+                            quantity
 
-                        return;
-
-                    }
-
-                    cart.setQuantity(totalQuantity);
-
-                    DisplayUtil.printSuccess("Cart Updated Successfully.");
+                    );
 
                     return;
 
                 }
 
-                Cart newCart = new Cart(generateCartId(), customer, product, quantity);
+                if (!validateStock(
+                        inventory,
+                        quantity)) {
 
-                DataStore.CARTS.put(newCart.getCartId(), newCart);
+                    return;
 
-                DisplayUtil.printSuccess("Product Added To Cart.");
+                }
+
+                Cart cart =
+                        new Cart(
+
+                                generateCartId(),
+
+                                customer,
+
+                                product,
+
+                                quantity
+
+                        );
+
+                cartDAO.insertCartItem(
+                        cart);
+
+                DisplayUtil.printSuccess(
+                        "Product Added To Cart.");
 
                 break;
 
-            } catch (ValidationException exception) {
+            }
 
-                DisplayUtil.printMessage(exception.getMessage());
+            catch (ValidationException exception) {
+
+                DisplayUtil.printError(
+                        exception.getMessage());
 
             }
 
@@ -147,29 +273,425 @@ public class CartService {
     }
 
     /**
-     * Checks whether Product already exists in Customer Cart.
+     * Returns Customer Cart.
      *
      * @param customer Customer
-     * @param product  Product
-     * @return Cart if exists otherwise null
+     * @return Cart
      */
-    private Cart isProductAlreadyInCart(Customer customer, Product product) {
+    private Cart selectCustomerCart(
+            Customer customer) {
 
-        return DataStore.CARTS.values()
+        if (!validateCart(customer)) {
 
-                .stream()
+            return null;
 
-                .filter(cart ->
+        }
 
-                        cart.getCustomer().equals(customer)
+        viewCart(customer);
 
-                                &&
+        String productName =
+                InputUtil.readString(
+                                "Enter Product Name : ")
+                        .trim();
 
-                                cart.getProduct().equals(product))
+        Product product =
+                productService.findProductByName(
+                        productName);
 
-                .findFirst()
+        if (product == null) {
 
-                .orElse(null);
+            DisplayUtil.printWarning(
+                    "Product Not Found.");
+
+            return null;
+
+        }
+
+        Cart cart =
+                cartDAO.findCartItem(
+
+                        customer.getUserId(),
+
+                        product.getProductId()
+
+                );
+
+        if (cart == null) {
+
+            DisplayUtil.printWarning(
+                    "Cart Item Not Found.");
+
+        }
+
+        return cart;
+
+    }
+
+    /**
+     * Returns Customer Cart.
+     *
+     * @param customer Customer
+     * @return Cart List
+     */
+    private List<Cart> getCustomerCart(
+            Customer customer) {
+
+        return cartDAO.findCartByCustomer(
+                customer.getUserId());
+
+    }
+
+    /**
+     * Returns Product.
+     *
+     * @return Product
+     */
+    private Product getProductOrNull() {
+
+        String productName =
+                InputUtil.readString(
+                                "Enter Product Name : ")
+                        .trim();
+
+        Product product =
+                productService.findProductByName(
+                        productName);
+
+        if (product == null) {
+
+            DisplayUtil.printWarning(
+                    "Product Not Found.");
+
+        }
+
+        return product;
+
+    }
+
+    /**
+     * Returns Inventory.
+     *
+     * @param product Product
+     * @return Inventory
+     */
+    private Inventory getInventory(
+            Product product) {
+
+        return inventoryService
+                .findInventoryByProduct(
+                        product);
+
+    }
+    /**
+     * Builds Cart Table Rows.
+     *
+     * @param carts Cart Items
+     * @return Table Rows
+     */
+    private List<String[]> buildCartRows(
+            List<Cart> carts) {
+
+        return carts.stream()
+
+                .map(cart -> new String[]{
+
+                        cart.getCartId(),
+
+                        cart.getProduct()
+                                .getProductName(),
+
+                        cart.getProduct()
+                                .getCategory()
+                                .getCategoryName(),
+
+                        String.valueOf(
+                                cart.getQuantity()),
+
+                        String.format(
+                                "%.2f",
+                                cart.getProduct()
+                                        .getProductPrice()),
+
+                        String.format(
+                                "%.2f",
+                                cart.getTotalPrice())
+
+                })
+
+                .toList();
+
+    }
+
+    /**
+     * Calculates Grand Total.
+     *
+     * @param carts Cart List
+     * @return Grand Total
+     */
+    private double calculateGrandTotal(
+            List<Cart> carts) {
+
+        return carts.stream()
+
+                .mapToDouble(
+                        Cart::getTotalPrice)
+
+                .sum();
+
+    }
+
+    /**
+     * Updates Existing Cart.
+     *
+     * @param cart Cart
+     * @param inventory Inventory
+     * @param quantity Quantity
+     */
+    private void saveExistingCart(
+            Cart cart,
+            Inventory inventory,
+            int quantity) {
+
+        int totalQuantity =
+                cart.getQuantity() + quantity;
+
+        if (!validateStock(
+                inventory,
+                totalQuantity)) {
+
+            return;
+
+        }
+
+        saveCartQuantity(
+                cart,
+                totalQuantity);
+
+        DisplayUtil.printSuccess(
+                "Cart Updated Successfully.");
+
+    }
+
+    /**
+     * Updates Cart.
+     *
+     * @param cart Cart
+     */
+    private void updateCart(
+            Cart cart) {
+
+        while (true) {
+
+            try {
+
+                Inventory inventory =
+                        getInventory(
+                                cart.getProduct());
+
+                int quantity =
+                        InputUtil.readInt(
+                                "Enter New Quantity : ");
+
+                ValidationUtil.validateQuantity(
+                        quantity);
+
+                if (!validateStock(
+                        inventory,
+                        quantity)) {
+
+                    return;
+
+                }
+
+                saveCartQuantity(
+                        cart,
+                        quantity);
+
+                DisplayUtil.printSuccess(
+                        "Cart Updated Successfully.");
+
+                break;
+
+            }
+
+            catch (ValidationException exception) {
+
+                DisplayUtil.printError(
+                        exception.getMessage());
+
+            }
+
+        }
+
+    }
+
+    /**
+     * Saves Cart Quantity.
+     *
+     * @param cart Cart
+     * @param quantity Quantity
+     */
+    private void saveCartQuantity(
+            Cart cart,
+            int quantity) {
+
+        cart.setQuantity(
+                quantity);
+
+        cartDAO.updateCartItem(
+                cart);
+
+    }
+
+    /**
+     * Removes Cart.
+     *
+     * @param cart Cart
+     */
+    private void removeCart(
+            Cart cart) {
+
+        cartDAO.deleteCartItem(
+                cart.getCartId());
+
+        DisplayUtil.printSuccess(
+                "Cart Item Removed Successfully.");
+
+    }
+
+    /**
+     * Validates Inventory.
+     *
+     * @param inventory Inventory
+     * @param product Product
+     * @return true if valid
+     */
+    private boolean validateInventory(
+            Inventory inventory,
+            Product product) {
+
+        if (inventory == null) {
+
+            DisplayUtil.printWarning(
+                    "Inventory Not Found.");
+
+            return false;
+
+        }
+
+        if (product.getProductStatus()
+                == ProductStatus.OUT_OF_STOCK) {
+
+            DisplayUtil.printWarning(
+                    "Product is Out Of Stock.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+    /**
+     * Validates Stock.
+     *
+     * @param inventory Inventory
+     * @param quantity Quantity
+     * @return true if valid
+     */
+    private boolean validateStock(
+            Inventory inventory,
+            int quantity) {
+
+        if (quantity > inventory.getQuantity()) {
+
+            DisplayUtil.printWarning(
+
+                    "Only "
+
+                            + inventory.getQuantity()
+
+                            + " item(s) available."
+
+            );
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Customer Cart.
+     *
+     * @param customer Customer
+     * @return true if Cart exists
+     */
+    private boolean validateCart(
+            Customer customer) {
+
+        if (getCustomerCart(customer).isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "Your Cart is Empty.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Available Products.
+     *
+     * @return true if Products exist
+     */
+    private boolean validateAvailableProducts() {
+
+        boolean available =
+
+                inventoryDAO.findAllInventory()
+
+                        .stream()
+
+                        .anyMatch(inventory ->
+
+                                inventory.getQuantity() > 0
+
+                                        &&
+
+                                        inventory.getProduct()
+                                                .getProductStatus()
+                                                == ProductStatus.AVAILABLE);
+
+        if (!available) {
+
+            DisplayUtil.printWarning(
+                    "No Products Available.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Finds Cart by Cart ID.
+     *
+     * @param cartId Cart ID
+     * @return Cart
+     */
+    public Cart findCartById(
+            String cartId) {
+
+        return cartDAO.findCartItemById(
+                cartId);
 
     }
 
@@ -184,375 +706,15 @@ public class CartService {
 
         do {
 
-            cartId = IdGenerator.generateId("CRT");
+            cartId =
+                    IdGenerator.generateId("CRT");
 
         }
 
-        while (DataStore.CARTS.containsKey(cartId));
+        while (findCartById(cartId) != null);
 
         return cartId;
 
     }
 
-    /**
-     * Displays Customer Cart.
-     *
-     * @param customer Logged-in Customer
-     */
-    public void viewCart(Customer customer) {
-
-        List<Cart> carts =
-
-                DataStore.CARTS.values()
-
-                        .stream()
-
-                        .filter(cart -> cart.getCustomer().equals(customer))
-
-                        .toList();
-
-        if (carts.isEmpty()) {
-
-            DisplayUtil.printMessage("Your Cart is Empty.");
-
-            return;
-
-        }
-
-        String[] headers = {
-
-                "Cart ID",
-
-                "Product Name",
-
-                "Category",
-
-                "Quantity",
-
-                "Price",
-
-                "Total"
-
-        };
-
-        DisplayUtil.printTable(
-
-                "MY CART",
-
-                headers,
-
-                buildCartRows(carts));
-
-        System.out.printf("Grand Total : ₹%.2f%n", calculateGrandTotal(carts));
-
-    }
-
-    /**
-     * Builds Cart Table Rows.
-     *
-     * @param carts Cart Items
-     * @return Cart Table Rows
-     */
-    private List<String[]> buildCartRows(List<Cart> carts) {
-        return carts.stream()
-
-                .map(cart -> new String[]{
-
-                        cart.getCartId(),
-
-                        cart.getProduct().getProductName(),
-
-                        cart.getProduct()
-                                .getCategory()
-                                .getCategoryName(),
-
-                        String.valueOf(
-                                cart.getQuantity()),
-
-                        String.format("%.2f",
-                                cart.getProduct()
-                                        .getProductPrice()),
-
-                        String.format("%.2f",
-                                cart.getTotalPrice())
-
-                })
-
-                .toList();
-
-    }
-
-    /**
-     * Displays Cart Details.
-     *
-     * @param cart Cart
-     */
-    private void displayCart(Cart cart) {
-
-        DisplayUtil.printTable(
-
-                "CART DETAILS",
-
-                new String[]{"Field", "Value"},
-
-                cart.getTableRows());
-
-    }
-
-    /**
-     * Calculates Grand Total.
-     *
-     * @param carts Cart Items
-     * @return Grand Total
-     */
-    private double calculateGrandTotal(List<Cart> carts) {
-
-        return carts.stream()
-
-                .mapToDouble(Cart::getTotalPrice)
-
-                .sum();
-
-    }
-
-    /**
-     * Updates Cart Quantity.
-     *
-     * @param customer Logged-in Customer
-     */
-    public void updateQuantity(Customer customer) {
-        if (!hasCart(customer)) {
-
-            DisplayUtil.printMessage(
-                    "Your Cart is Empty.");
-
-            return;
-
-        }
-
-        viewCart(customer);
-
-        Cart cart = getCustomerCartOrNull(customer);
-
-        if (cart != null) {
-
-            updateCart(cart);
-
-        }
-
-    }
-
-    /**
-     * Removes Cart Item.
-     *
-     * @param customer Logged-in Customer
-     */
-    public void removeItem(Customer customer) {
-        if (!hasCart(customer)) {
-            DisplayUtil.printMessage("Your Cart is Empty.");
-            return;
-        }
-
-        viewCart(customer);
-
-        Cart cart = getCustomerCartOrNull(customer);
-
-        if (cart != null) {
-
-            removeCart(cart);
-
-        }
-
-    }
-
-    /**
-     * Clears Customer Cart.
-     *
-     * @param customer Logged-in Customer
-     */
-    public void clearCart(Customer customer) {
-
-        if (!hasCart(customer)) {
-
-            DisplayUtil.printMessage(
-                    "Your Cart is Empty.");
-
-            return;
-
-        }
-
-        List<Cart> carts =
-                DataStore.CARTS.values()
-                        .stream()
-                        .filter(cart ->
-                                cart.getCustomer()
-                                        .equals(customer))
-                        .toList();
-
-        for (Cart cart : carts) {
-
-            removeCart(cart);
-
-        }
-
-        DisplayUtil.printSuccess(
-                "Cart Cleared Successfully.");
-
-    }
-
-    /**
-     * Finds Cart using Cart ID.
-     *
-     * @param cartId Cart ID
-     * @return Cart if found otherwise null
-     */
-    public Cart findCartById(String cartId) {
-
-        return DataStore.CARTS.get(cartId.toUpperCase());
-
-    }
-
-    /**
-     * Returns Cart.
-     *
-     * @return Cart if found otherwise null
-     */
-    private Cart getCartOrNull() {
-
-        String cartId = InputUtil.readString("Enter Cart ID : ").trim().toUpperCase();
-
-        Cart cart = findCartById(cartId);
-
-        if (cart == null) {
-
-            DisplayUtil.printMessage("Cart Item Not Found.");
-
-        }
-
-        return cart;
-
-    }
-
-    /**
-     * Checks whether Customer has Cart Items.
-     *
-     * @param customer Customer
-     * @return true if Cart exists, otherwise false
-     */
-    private boolean hasCart(Customer customer) {
-
-        return DataStore.CARTS.values()
-                .stream()
-                .anyMatch(cart ->
-                        cart.getCustomer()
-                                .equals(customer));
-
-    }
-
-    // Returns Customer Cart.
-    private Cart getCustomerCartOrNull(Customer customer) {
-
-        String productName =
-                InputUtil.readString(
-                                "Enter Product Name : ")
-                        .trim();
-
-        Cart cart = DataStore.CARTS.values()
-                .stream()
-                .filter(item ->
-                        item.getCustomer()
-                                .equals(customer))
-                .filter(item ->
-                        item.getProduct()
-                                .getProductName()
-                                .equalsIgnoreCase(productName))
-                .findFirst()
-                .orElse(null);
-
-        if (cart == null) {
-
-            DisplayUtil.printMessage(
-                    "Cart Item Not Found.");
-
-        }
-
-        return cart;
-
-    }
-
-    //Returns Product if found.
-    private Product getProductOrNull() {
-
-        String productName = InputUtil.readString(
-                        "Enter Product Name : ")
-                .trim();
-
-        Product product =
-                productService.findProductByName(
-                        productName);
-
-        if (product == null) {
-
-            DisplayUtil.printMessage("Product Not Found.");
-
-        }
-
-        return product;
-
-    }
-
-
-    /**
-     * Updates Cart.
-     *
-     * @param cart Cart
-     */
-    private void updateCart(Cart cart) {
-
-        while (true) {
-
-            try {
-
-                Inventory inventory = inventoryService.findInventoryByProduct(cart.getProduct());
-
-                int quantity = InputUtil.readInt("Enter New Quantity : ");
-
-                ValidationUtil.validateQuantity(quantity);
-
-                if (quantity > inventory.getQuantity()) {
-
-                    DisplayUtil.printMessage("Only " + inventory.getQuantity() + " item(s) available.");
-
-                    return;
-
-                }
-
-                cart.setQuantity(quantity);
-
-                DisplayUtil.printSuccess("Cart Updated Successfully.");
-
-                break;
-
-            } catch (ValidationException exception) {
-
-                DisplayUtil.printMessage(exception.getMessage());
-
-            }
-
-        }
-
-    }
-
-    /**
-     * Removes Cart.
-     *
-     * @param cart Cart
-     */
-    private void removeCart(Cart cart) {
-
-        DataStore.CARTS.remove(cart.getCartId());
-
-        DisplayUtil.printSuccess("Cart Item Removed Successfully.");
-
-    }
 }

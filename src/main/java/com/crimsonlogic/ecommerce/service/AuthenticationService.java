@@ -1,5 +1,9 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.AddressDAO;
+import com.crimsonlogic.ecommerce.dao.AdminDAO;
+import com.crimsonlogic.ecommerce.dao.CustomerDAO;
+import com.crimsonlogic.ecommerce.dao.SellerDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.DuplicateUserException;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.InvalidCredentialsException;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
@@ -7,19 +11,36 @@ import com.crimsonlogic.ecommerce.model.Address;
 import com.crimsonlogic.ecommerce.model.Admin;
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 import com.crimsonlogic.ecommerce.util.ValidationUtil;
-
-import java.util.Optional;
 
 /**
  * Handles registration, login and logout operations
  * for all users of the application.
  */
 public class AuthenticationService {
+
+    /**
+     * Address DAO.
+     */
+    private final AddressDAO addressDAO = new AddressDAO();
+
+    /**
+     * Admin DAO.
+     */
+    private final AdminDAO adminDAO = new AdminDAO();
+
+    /**
+     * Customer DAO.
+     */
+    private final CustomerDAO customerDAO = new CustomerDAO();
+
+    /**
+     * Seller DAO.
+     */
+    private final SellerDAO sellerDAO = new SellerDAO();
 
     /**
      * Registers a new Seller.
@@ -61,16 +82,38 @@ public class AuthenticationService {
         String shopAddress =
                 InputUtil.readString("Enter Shop Address: ");
 
-//        Address address = createAddress();
+        Address address = createAddress();
 
-        Seller seller = new Seller(IdGenerator.generateId("SEL"),
-                name, email, phone, password,null, shopName, shopAddress);
+        if (address != null) {
 
-        DataStore.SELLERS.put(
-                seller.getUserId(),
-                seller);
+            addressDAO.insertAddress(address);
+
+        }
+
+        Seller seller = new Seller(
+
+                IdGenerator.generateId("SEL"),
+
+                name,
+
+                email,
+
+                phone,
+
+                password,
+
+                address,
+
+                shopName,
+
+                shopAddress
+
+        );
+
+        sellerDAO.insertSeller(seller);
 
         DisplayUtil.printSuccess("Registered Successfully.");
+
         System.out.println("Seller ID : " + seller.getUserId());
 
         return seller;
@@ -93,7 +136,9 @@ public class AuthenticationService {
                                 "Enter House Number (Press Enter to Skip): ");
 
                 if (houseNumber == null) {
+
                     return null;
+
                 }
 
                 String street =
@@ -112,12 +157,22 @@ public class AuthenticationService {
                         InputUtil.readString("Enter Zip Code: ");
 
                 Address address = new Address(
+
+                        IdGenerator.generateId("ADDR"),
+
                         houseNumber,
+
                         street,
+
                         city,
+
                         state,
+
                         country,
-                        zipCode);
+
+                        zipCode
+
+                );
 
                 ValidationUtil.validateAddress(address);
 
@@ -134,9 +189,9 @@ public class AuthenticationService {
     }
 
     /**
-     * Reads a valid User Name.
+     * Reads Valid User Name.
      *
-     * @return Valid User Name
+     * @return User Name
      */
     private String readValidUserName() {
 
@@ -162,23 +217,36 @@ public class AuthenticationService {
     }
 
     /**
-     * Reads a valid Email Address.
+     * Reads Valid Email.
      *
-     * @return Valid Email
+     * @return Email
      */
     private String readValidEmail() {
 
         while (true) {
+
             try {
-                String email = InputUtil.readString("Enter Email: ");
+
+                String email =
+                        InputUtil.readString("Enter Email: ");
+
                 ValidationUtil.validateEmail(email);
 
                 if (isEmailExists(email)) {
-                    throw new DuplicateUserException("Email already registered.");
+
+                    throw new DuplicateUserException(
+                            "Email already registered.");
+
                 }
+
                 return email;
-            } catch (ValidationException | DuplicateUserException exception) {
-                System.out.println(exception.getMessage()+ "Example : abc@domain.com");
+
+            } catch (ValidationException |
+                     DuplicateUserException exception) {
+
+                System.out.println(exception.getMessage()
+                        + " Example : abc@domain.com");
+
             }
 
         }
@@ -186,30 +254,45 @@ public class AuthenticationService {
     }
 
     /**
-     * Reads a valid Phone Number.
+     * Reads Valid Phone Number.
      *
-     * @return Valid Phone Number
+     * @return Phone Number
      */
     private String readValidPhone() {
 
         while (true) {
+
             try {
-                String phone = InputUtil.readString("Enter Phone Number: ");
+
+                String phone =
+                        InputUtil.readString("Enter Phone Number: ");
+
                 ValidationUtil.validatePhone(phone);
+
                 if (isPhoneExists(phone)) {
-                    throw new DuplicateUserException("Phone Number already registered.");
+
+                    throw new DuplicateUserException(
+                            "Phone Number already registered.");
+
                 }
+
                 return phone;
-            } catch (ValidationException | DuplicateUserException exception) {
+
+            } catch (ValidationException |
+                     DuplicateUserException exception) {
+
                 System.out.println(exception.getMessage());
+
             }
+
         }
+
     }
 
     /**
-     * Reads a valid Password.
+     * Reads Valid Password.
      *
-     * @return Valid Password
+     * @return Password
      */
     private String readValidPassword() {
 
@@ -218,8 +301,7 @@ public class AuthenticationService {
             try {
 
                 String password =
-                        InputUtil.readString(
-                                "Enter Password: ");
+                        InputUtil.readString("Enter Password: ");
 
                 ValidationUtil.validatePassword(password);
 
@@ -238,26 +320,14 @@ public class AuthenticationService {
     /**
      * Checks whether Email already exists.
      *
-     * @param email Email Address
+     * @param email Email
      * @return true if exists
      */
     private boolean isEmailExists(String email) {
 
-        return DataStore.ADMINS.values()
-                .stream()
-                .anyMatch(admin ->
-                        admin.getUserEmail()
-                                .equalsIgnoreCase(email))
-                || DataStore.SELLERS.values()
-                .stream()
-                .anyMatch(seller ->
-                        seller.getUserEmail()
-                                .equalsIgnoreCase(email))
-                || DataStore.CUSTOMERS.values()
-                .stream()
-                .anyMatch(customer ->
-                        customer.getUserEmail()
-                                .equalsIgnoreCase(email));
+        return adminDAO.findAdminByEmail(email) != null
+                || sellerDAO.findSellerByEmail(email) != null
+                || customerDAO.findCustomerByEmail(email) != null;
 
     }
 
@@ -269,50 +339,20 @@ public class AuthenticationService {
      */
     private boolean isPhoneExists(String phone) {
 
-        return DataStore.ADMINS.values()
-                .stream()
-                .anyMatch(admin ->
-                        admin.getUserPhNo()
-                                .equals(phone))
-                || DataStore.SELLERS.values()
-                .stream()
-                .anyMatch(seller ->
-                        seller.getUserPhNo()
-                                .equals(phone))
-                || DataStore.CUSTOMERS.values()
-                .stream()
-                .anyMatch(customer ->
-                        customer.getUserPhNo()
-                                .equals(phone));
+        return adminDAO.findAdminByPhone(phone) != null
+                || sellerDAO.findSellerByPhone(phone) != null
+                || customerDAO.findCustomerByPhone(phone) != null;
 
     }
 
     /**
-     * Finds Seller by Email.
+     * Registers Customer.
      *
-     * @param email Seller Email
-     * @return Seller
-     */
-    private Optional<Seller> findSellerByEmail(String email) {
-
-        return DataStore.SELLERS.values()
-                .stream()
-                .filter(seller ->
-                        seller.getUserEmail()
-                                .equalsIgnoreCase(email))
-                .findFirst();
-
-    }
-
-    /**
-     * Registers a new Customer.
-     *
-     * @return Registered Customer
+     * @return Customer
      */
     public Customer registerCustomer() {
 
-        DisplayUtil.printMessage(
-                "Enter Customer Details");
+        DisplayUtil.printMessage("Enter Customer Details");
 
         String name = readValidUserName();
 
@@ -324,36 +364,67 @@ public class AuthenticationService {
 
         Address address = createAddress();
 
-        Customer customer = new Customer(IdGenerator.generateId("CUS"),
-                name, email, phone, password, address);
+        if (address != null) {
 
-        DataStore.CUSTOMERS.put(
-                customer.getUserId(),
-                customer);
+            addressDAO.insertAddress(address);
+
+        }
+
+        double walletBalance;
+
+        while (true) {
+
+            try {
+
+                walletBalance =
+                        InputUtil.readDouble(
+                                "Enter Initial Wallet Balance : ");
+
+                if (walletBalance < 0) {
+
+                    throw new ValidationException(
+                            "Wallet Balance Cannot Be Negative.");
+
+                }
+
+                break;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(exception.getMessage());
+
+            }
+
+        }
+
+        Customer customer = new Customer(
+
+                IdGenerator.generateId("CUS"),
+
+                name,
+
+                email,
+
+                phone,
+
+                password,
+
+                address,
+
+                walletBalance
+
+        );
+
+        customerDAO.insertCustomer(customer);
 
         DisplayUtil.printSuccess("Registered Successfully.");
-        System.out.println("Customer ID : " + customer.getUserId());
+
+        System.out.println("Customer ID : "
+                + customer.getUserId());
 
         return customer;
 
     }
-    /**
-     * Finds Customer by Email.
-     *
-     * @param email Customer Email
-     * @return Customer
-     */
-    private Optional<Customer> findCustomerByEmail(String email) {
-
-        return DataStore.CUSTOMERS.values()
-                .stream()
-                .filter(customer ->
-                        customer.getUserEmail()
-                                .equalsIgnoreCase(email))
-                .findFirst();
-
-    }
-
     /**
      * Authenticates Admin.
      *
@@ -363,37 +434,44 @@ public class AuthenticationService {
 
         try {
 
-            DisplayUtil.printMessage("Enter Admin Credentials");
+            DisplayUtil.printMessage(
+                    "Enter Admin Credentials");
 
             String email =
-                    InputUtil.readString("Enter Email    : ");
+                    InputUtil.readString(
+                            "Enter Email    : ");
 
             String password =
-                    InputUtil.readString("Enter Password : ");
+                    InputUtil.readString(
+                            "Enter Password : ");
 
-            Optional<Admin> admin =
-                    findAdminByEmail(email);
+            Admin admin =
+                    adminDAO.findAdminByEmail(email);
 
-            if (admin.isEmpty()) {
+            if (admin == null) {
+
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            if (!admin.get()
-                    .getUserPassword()
+            if (!admin.getUserPassword()
                     .equals(password)) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            DisplayUtil.printMessage("LOGIN SUCCESSFUL");
+            DisplayUtil.printMessage(
+                    "LOGIN SUCCESSFUL");
 
-            return admin.get();
+            return admin;
 
         } catch (InvalidCredentialsException exception) {
 
-            DisplayUtil.printMessage(exception.getMessage());
+            DisplayUtil.printMessage(
+                    exception.getMessage());
 
             return null;
 
@@ -410,37 +488,44 @@ public class AuthenticationService {
 
         try {
 
-            DisplayUtil.printMessage("Enter Seller Credentials");
+            DisplayUtil.printMessage(
+                    "Enter Seller Credentials");
 
             String email =
-                    InputUtil.readString("Enter Email    : ");
+                    InputUtil.readString(
+                            "Enter Email    : ");
 
             String password =
-                    InputUtil.readString("Enter Password : ");
+                    InputUtil.readString(
+                            "Enter Password : ");
 
-            Optional<Seller> seller =
-                    findSellerByEmail(email);
+            Seller seller =
+                    sellerDAO.findSellerByEmail(email);
 
-            if (seller.isEmpty()) {
+            if (seller == null) {
+
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            if (!seller.get()
-                    .getUserPassword()
+            if (!seller.getUserPassword()
                     .equals(password)) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            DisplayUtil.printMessage("LOGIN SUCCESSFUL");
+            DisplayUtil.printMessage(
+                    "LOGIN SUCCESSFUL");
 
-            return seller.get();
+            return seller;
 
         } catch (InvalidCredentialsException exception) {
 
-            DisplayUtil.printMessage(exception.getMessage());
+            DisplayUtil.printMessage(
+                    exception.getMessage());
 
             return null;
 
@@ -457,37 +542,44 @@ public class AuthenticationService {
 
         try {
 
-            DisplayUtil.printMessage("Enter Customer Credentials");
+            DisplayUtil.printMessage(
+                    "Enter Customer Credentials");
 
             String email =
-                    InputUtil.readString("Enter Email    : ");
+                    InputUtil.readString(
+                            "Enter Email    : ");
 
             String password =
-                    InputUtil.readString("Enter Password : ");
+                    InputUtil.readString(
+                            "Enter Password : ");
 
-            Optional<Customer> customer =
-                    findCustomerByEmail(email);
+            Customer customer =
+                    customerDAO.findCustomerByEmail(email);
 
-            if (customer.isEmpty()) {
+            if (customer == null) {
+
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            if (!customer.get()
-                    .getUserPassword()
+            if (!customer.getUserPassword()
                     .equals(password)) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
+
             }
 
-            DisplayUtil.printMessage("LOGIN SUCCESSFUL");
+            DisplayUtil.printMessage(
+                    "LOGIN SUCCESSFUL");
 
-            return customer.get();
+            return customer;
 
         } catch (InvalidCredentialsException exception) {
 
-            DisplayUtil.printMessage(exception.getMessage());
+            DisplayUtil.printMessage(
+                    exception.getMessage());
 
             return null;
 
@@ -496,28 +588,12 @@ public class AuthenticationService {
     }
 
     /**
-     * Logs out the current user.
+     * Logs out current user.
      */
     public void logout() {
 
-        DisplayUtil.printMessage("Logged out Successfully.");
-
-    }
-
-    /**
-     * Finds Admin by Email.
-     *
-     * @param email Admin Email
-     * @return Admin
-     */
-    private Optional<Admin> findAdminByEmail(String email) {
-
-        return DataStore.ADMINS.values()
-                .stream()
-                .filter(admin ->
-                        admin.getUserEmail()
-                                .equalsIgnoreCase(email))
-                .findFirst();
+        DisplayUtil.printMessage(
+                "Logged out Successfully.");
 
     }
 

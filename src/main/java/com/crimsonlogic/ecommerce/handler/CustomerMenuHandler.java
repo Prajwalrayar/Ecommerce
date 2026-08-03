@@ -4,6 +4,7 @@ import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.service.AuthenticationService;
 import com.crimsonlogic.ecommerce.service.CartService;
 import com.crimsonlogic.ecommerce.service.CustomerService;
+import com.crimsonlogic.ecommerce.service.PaymentService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 
@@ -20,6 +21,7 @@ public class CustomerMenuHandler {
 
     private final CartMenuHandler cartMenuHandler;
     private final OrderMenuHandler orderMenuHandler;
+    private final PaymentMenuHandler paymentMenuHandler;
 
     /**
      * Parameterized Constructor.
@@ -38,6 +40,7 @@ public class CustomerMenuHandler {
 
         this.orderMenuHandler = new OrderMenuHandler();
 
+        this.paymentMenuHandler = new PaymentMenuHandler();
     }
 
     /**
@@ -86,6 +89,11 @@ public class CustomerMenuHandler {
                 case "orders":
 
                     orderMenuHandler.showMenu(customer);
+
+                    break;
+                case "payments":
+
+                    paymentMenuHandler.showMenu(customer);
 
                     break;
 
@@ -138,6 +146,7 @@ public class CustomerMenuHandler {
         System.out.println("BROWSE PRODUCTS");
         System.out.println("CART");
         System.out.println("ORDERS");
+        System.out.println("PAYMENTS");
         System.out.println("DELETE");
         System.out.println("LOGOUT");
         System.out.println("==========================================");

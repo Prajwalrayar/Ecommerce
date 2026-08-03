@@ -1,8 +1,8 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CategoryDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Category;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -14,6 +14,11 @@ import java.util.List;
  * Service class responsible for Category operations.
  */
 public class CategoryService {
+
+    /**
+     * Category DAO.
+     */
+    private final CategoryDAO categoryDAO = new CategoryDAO();
 
     /**
      * Adds a new Category.
@@ -31,13 +36,7 @@ public class CategoryService {
 
                 ValidationUtil.validateCategoryName(categoryName);
 
-                boolean exists = DataStore.CATEGORIES.values()
-                        .stream()
-                        .anyMatch(category ->
-                                category.getCategoryName()
-                                        .equalsIgnoreCase(categoryName));
-
-                if (exists) {
+                if (categoryDAO.findCategoryByName(categoryName) != null) {
 
                     DisplayUtil.printError(
                             "Category already exists.");
@@ -53,29 +52,19 @@ public class CategoryService {
                 ValidationUtil.validateCategoryDescription(
                         description);
 
-                String categoryId;
-
-                do {
-
-                    categoryId = IdGenerator.generateId("CAT");
-
-                } while (DataStore.CATEGORIES.containsKey(categoryId));
-
                 Category category = new Category(
-                        categoryId,
+                        IdGenerator.generateId("CAT"),
                         categoryName,
                         description);
 
-                DataStore.CATEGORIES.put(
-                        category.getCategoryId(),
-                        category);
+                categoryDAO.insertCategory(category);
 
                 DisplayUtil.printSuccess(
                         "Category Added Successfully.");
 
                 System.out.println(
-                        "Category ID : " +
-                                category.getCategoryId());
+                        "Category ID : "
+                                + category.getCategoryId());
 
                 break;
 
@@ -95,19 +84,37 @@ public class CategoryService {
      */
     public void viewAllCategories() {
 
-        if (DataStore.CATEGORIES.isEmpty()) {
+        List<Category> categories =
+                categoryDAO.findAllCategories();
 
-            DisplayUtil.printWarning("No Categories Available.");
+        if (categories.isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Categories Available.");
 
             return;
 
         }
 
-        String[] headers = {"Category ID", "Category Name", "Description"};
+        String[] headers = {
+                "Category ID",
+                "Category Name",
+                "Description"
+        };
 
-        List<String[]> rows = DataStore.CATEGORIES.values().stream().map(category -> new String[]{category.getCategoryId(), category.getCategoryName(), category.getCategoryDescription()}).toList();
+        List<String[]> rows =
+                categories.stream()
+                        .map(category -> new String[]{
+                                category.getCategoryId(),
+                                category.getCategoryName(),
+                                category.getCategoryDescription()
+                        })
+                        .toList();
 
-        DisplayUtil.printTable("AVAILABLE CATEGORIES", headers, rows);
+        DisplayUtil.printTable(
+                "AVAILABLE CATEGORIES",
+                headers,
+                rows);
 
     }
 
@@ -116,29 +123,43 @@ public class CategoryService {
      */
     public void searchCategory() {
 
-        if (DataStore.CATEGORIES.isEmpty()) {
+        List<Category> categories =
+                categoryDAO.findAllCategories();
 
-            DisplayUtil.printWarning("No Categories Available.");
+        if (categories.isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Categories Available.");
 
             return;
 
         }
 
-        String categoryName = InputUtil.readString("Enter Category Name : ");
+        String categoryName =
+                InputUtil.readString(
+                        "Enter Category Name : ");
 
-        Category category = findCategoryByName(categoryName);
+        Category category =
+                categoryDAO.findCategoryByName(categoryName);
 
         if (category == null) {
 
-            DisplayUtil.printError("Category Not Found.");
+            DisplayUtil.printError(
+                    "Category Not Found.");
 
             return;
 
         }
 
-        String[] headers = {"Field", "Value"};
+        String[] headers = {
+                "Field",
+                "Value"
+        };
 
-        DisplayUtil.printTable("CATEGORY DETAILS", headers, category.getTableRows());
+        DisplayUtil.printTable(
+                "CATEGORY DETAILS",
+                headers,
+                category.getTableRows());
 
     }
 
@@ -146,11 +167,11 @@ public class CategoryService {
      * Finds Category by Category Name.
      *
      * @param categoryName Category Name
-     * @return Category if found, otherwise null
+     * @return Category
      */
     public Category findCategoryByName(String categoryName) {
 
-        return DataStore.CATEGORIES.values().stream().filter(category -> category.getCategoryName().equalsIgnoreCase(categoryName)).findFirst().orElse(null);
+        return categoryDAO.findCategoryByName(categoryName);
 
     }
 
@@ -159,9 +180,13 @@ public class CategoryService {
      */
     public void updateCategory() {
 
-        if (DataStore.CATEGORIES.isEmpty()) {
+        List<Category> categories =
+                categoryDAO.findAllCategories();
 
-            DisplayUtil.printWarning("No Categories Available.");
+        if (categories.isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Categories Available.");
 
             return;
 
@@ -169,13 +194,17 @@ public class CategoryService {
 
         viewAllCategories();
 
-        String categoryId = InputUtil.readString("Enter Category ID : ");
+        String categoryId =
+                InputUtil.readString(
+                        "Enter Category ID : ");
 
-        Category category = DataStore.CATEGORIES.get(categoryId);
+        Category category =
+                categoryDAO.findCategoryById(categoryId);
 
         if (category == null) {
 
-            DisplayUtil.printError("Category Not Found.");
+            DisplayUtil.printError(
+                    "Category Not Found.");
 
             return;
 
@@ -185,34 +214,49 @@ public class CategoryService {
 
             try {
 
-                String categoryName = InputUtil.readString("Enter New Category Name : ");
+                String categoryName =
+                        InputUtil.readString(
+                                "Enter New Category Name : ");
 
-                ValidationUtil.validateCategoryName(categoryName);
+                ValidationUtil.validateCategoryName(
+                        categoryName);
 
-                boolean exists = DataStore.CATEGORIES.values().stream().anyMatch(c -> !c.getCategoryId().equals(categoryId) && c.getCategoryName().equalsIgnoreCase(categoryName));
+                Category existing =
+                        categoryDAO.findCategoryByName(categoryName);
 
-                if (exists) {
+                if (existing != null &&
+                        !existing.getCategoryId()
+                                .equals(categoryId)) {
 
-                    DisplayUtil.printError("Category already exists.");
+                    DisplayUtil.printError(
+                            "Category already exists.");
 
                     continue;
 
                 }
 
-                String description = InputUtil.readString("Enter New Description : ");
+                String description =
+                        InputUtil.readString(
+                                "Enter New Description : ");
 
-                ValidationUtil.validateCategoryDescription(description);
+                ValidationUtil.validateCategoryDescription(
+                        description);
 
                 category.setCategoryName(categoryName);
+
                 category.setCategoryDescription(description);
 
-                DisplayUtil.printSuccess("Category Updated Successfully.");
+                categoryDAO.updateCategory(category);
+
+                DisplayUtil.printSuccess(
+                        "Category Updated Successfully.");
 
                 break;
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printError(
+                        exception.getMessage());
 
             }
 
@@ -225,9 +269,13 @@ public class CategoryService {
      */
     public void deleteCategory() {
 
-        if (DataStore.CATEGORIES.isEmpty()) {
+        List<Category> categories =
+                categoryDAO.findAllCategories();
 
-            DisplayUtil.printWarning("No Categories Available.");
+        if (categories.isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Categories Available.");
 
             return;
 
@@ -235,19 +283,26 @@ public class CategoryService {
 
         viewAllCategories();
 
-        String categoryId = InputUtil.readString("Enter Category ID : ");
+        String categoryId =
+                InputUtil.readString(
+                        "Enter Category ID : ");
 
-        Category category = DataStore.CATEGORIES.remove(categoryId);
+        Category category =
+                categoryDAO.findCategoryById(categoryId);
 
         if (category == null) {
 
-            DisplayUtil.printError("Category Not Found.");
+            DisplayUtil.printError(
+                    "Category Not Found.");
 
             return;
 
         }
 
-        DisplayUtil.printSuccess("Category Deleted Successfully.");
+        categoryDAO.deleteCategory(categoryId);
+
+        DisplayUtil.printSuccess(
+                "Category Deleted Successfully.");
 
     }
 

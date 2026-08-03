@@ -1,11 +1,12 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.InventoryDAO;
+import com.crimsonlogic.ecommerce.dao.ProductDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Inventory;
 import com.crimsonlogic.ecommerce.model.Product;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -18,14 +19,64 @@ import java.util.List;
  */
 public class InventoryService {
 
-    private final ProductService productService;
+    /**
+     * Product Service.
+     */
+    private final ProductService productService =
+            new ProductService();
+
+    /**
+     * Inventory DAO.
+     */
+    private final InventoryDAO inventoryDAO =
+            new InventoryDAO();
+
+    /**
+     * Product DAO.
+     */
+    private final ProductDAO productDAO =
+            new ProductDAO();
+
+    /**
+     * Seller Inventory Headers.
+     */
+    private static final String[] SELLER_HEADERS = {
+
+            "Inventory ID",
+
+            "Product ID",
+
+            "Product Name",
+
+            "Category",
+
+            "Quantity"
+
+    };
+
+    /**
+     * Admin Inventory Headers.
+     */
+    private static final String[] ADMIN_HEADERS = {
+
+            "Inventory ID",
+
+            "Product ID",
+
+            "Product Name",
+
+            "Category",
+
+            "Seller",
+
+            "Quantity"
+
+    };
 
     /**
      * Default Constructor.
      */
     public InventoryService() {
-
-        productService = new ProductService();
 
     }
 
@@ -36,15 +87,16 @@ public class InventoryService {
      */
     public void addStock(Seller seller) {
 
-        productService.viewSellerProducts(seller);
+        if (!validateProductsAvailable()) {
 
-        Product product = getSellerProductOrNull(seller);
-
-        if (product != null) {
-
-            createInventory(product);
+            return;
 
         }
+
+        productService.viewSellerProducts(seller);
+
+        addStockToProduct(
+                getSellerProductOrNull(seller));
 
     }
 
@@ -54,15 +106,173 @@ public class InventoryService {
      */
     public void addStock() {
 
-        productService.viewAllProducts();
+        if (!validateProductsAvailable()) {
 
-        Product product = getProductOrNull();
-
-        if (product != null) {
-
-            createInventory(product);
+            return;
 
         }
+
+        productService.viewAllProducts();
+
+        addStockToProduct(
+                getProductOrNull());
+
+    }
+
+    /**
+     * Displays Seller Inventory.
+     *
+     * @param seller Seller
+     */
+    public void viewSellerInventory(
+            Seller seller) {
+
+        displayInventories(
+
+                inventoryDAO.findInventoryBySeller(
+                        seller.getUserId()),
+
+                "MY INVENTORY",
+
+                false
+
+        );
+
+    }
+
+    /**
+     * Displays All Inventory.
+     */
+    public void viewAllInventory() {
+
+        displayInventories(
+
+                inventoryDAO.findAllInventory(),
+
+                "ALL INVENTORY",
+
+                true
+
+        );
+
+    }
+    /**
+     * Searches Seller Inventory.
+     *
+     * @param seller Seller
+     */
+    public void searchInventory(
+            Seller seller) {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewSellerInventory(seller);
+
+        searchInventoryDetails(
+                getSellerInventoryOrNull(seller));
+
+    }
+
+    /**
+     * Searches Inventory.
+     * Used by Admin.
+     */
+    public void searchInventory() {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewAllInventory();
+
+        searchInventoryDetails(
+                getInventoryOrNull());
+
+    }
+
+    /**
+     * Updates Seller Stock.
+     *
+     * @param seller Logged-in Seller
+     */
+    public void updateStock(
+            Seller seller) {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewSellerInventory(seller);
+
+        updateInventoryStock(
+                getSellerInventoryOrNull(seller));
+
+    }
+
+    /**
+     * Updates Stock.
+     * Used by Admin.
+     */
+    public void updateStock() {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewAllInventory();
+
+        updateInventoryStock(
+                getInventoryOrNull());
+
+    }
+
+    /**
+     * Deletes Seller Stock.
+     *
+     * @param seller Logged-in Seller
+     */
+    public void deleteStock(
+            Seller seller) {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewSellerInventory(seller);
+
+        deleteInventoryStock(
+                getSellerInventoryOrNull(seller));
+
+    }
+
+    /**
+     * Deletes Inventory.
+     * Used by Admin.
+     */
+    public void deleteStock() {
+
+        if (!validateInventoryAvailable()) {
+
+            return;
+
+        }
+
+        viewAllInventory();
+
+        deleteInventoryStock(
+                getInventoryOrNull());
 
     }
 
@@ -79,7 +289,7 @@ public class InventoryService {
 
                 if (isInventoryExists(product)) {
 
-                    DisplayUtil.printSuccess(
+                    DisplayUtil.printWarning(
                             "Inventory Already Exists.");
 
                     return;
@@ -90,16 +300,21 @@ public class InventoryService {
                         InputUtil.readInt(
                                 "Enter Quantity : ");
 
-                ValidationUtil.validateQuantity(quantity);
+                ValidationUtil.validateQuantity(
+                        quantity);
 
                 Inventory inventory =
                         new Inventory(
-                                generateInventoryId(),
-                                product,
-                                quantity);
 
-                DataStore.INVENTORIES.put(
-                        inventory.getInventoryId(),
+                                generateInventoryId(),
+
+                                product,
+
+                                quantity
+
+                        );
+
+                inventoryDAO.insertInventory(
                         inventory);
 
                 updateProductStatus(inventory);
@@ -117,7 +332,7 @@ public class InventoryService {
 
             catch (ValidationException exception) {
 
-                DisplayUtil.printSuccess(
+                DisplayUtil.printError(
                         exception.getMessage());
 
             }
@@ -127,150 +342,50 @@ public class InventoryService {
     }
 
     /**
-     * Checks whether Inventory already exists.
+     * Displays Inventories.
      *
-     * @param product Product
-     * @return true if Inventory exists
+     * @param inventories Inventory List
+     * @param title Table Title
+     * @param includeSeller Include Seller Column
      */
-    private boolean isInventoryExists(Product product) {
-
-        return DataStore.INVENTORIES.values()
-                .stream()
-                .anyMatch(inventory ->
-                        inventory.getProduct()
-                                .equals(product));
-
-    }
-
-    /**
-     * Generates Inventory ID.
-     *
-     * @return Inventory ID
-     */
-    private String generateInventoryId() {
-
-        String inventoryId;
-
-        do {
-
-            inventoryId =
-                    IdGenerator.generateId("INV");
-
-        }
-
-        while (DataStore.INVENTORIES.containsKey(inventoryId));
-
-        return inventoryId;
-
-    }
-
-    /**
-     * Updates Product Status based on Quantity.
-     *
-     * @param inventory Inventory
-     */
-    private void updateProductStatus(Inventory inventory) {
-
-        if (inventory.getQuantity() == 0) {
-
-            inventory.getProduct()
-                    .setProductStatus(
-                            ProductStatus.OUT_OF_STOCK);
-
-        } else {
-
-            inventory.getProduct()
-                    .setProductStatus(
-                            ProductStatus.AVAILABLE);
-
-        }
-
-    }
-    /**
-     * Displays Seller Inventory.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void viewSellerInventory(Seller seller) {
-
-        List<Inventory> inventories =
-                DataStore.INVENTORIES.values()
-                        .stream()
-                        .filter(inventory ->
-                                inventory.getProduct()
-                                        .getSeller()
-                                        .equals(seller))
-                        .toList();
+    private void displayInventories(List<Inventory> inventories,
+            String title, boolean includeSeller) {
 
         if (inventories.isEmpty()) {
 
-            DisplayUtil.printSuccess(
+            DisplayUtil.printWarning(
                     "No Inventory Available.");
 
             return;
 
         }
 
-        String[] headers = {
-                "Inventory ID",
-                "Product ID",
-                "Product Name",
-                "Category",
-                "Quantity"
-        };
-
         DisplayUtil.printTable(
-                "MY INVENTORY",
-                headers,
+
+                title,
+
+                includeSeller
+                        ? ADMIN_HEADERS
+                        : SELLER_HEADERS,
+
                 buildInventoryRows(
                         inventories,
-                        false));
+                        includeSeller)
 
-    }
-
-    /**
-     * Displays All Inventory.
-     */
-    public void viewAllInventory() {
-
-        if (DataStore.INVENTORIES.isEmpty()) {
-
-            DisplayUtil.printSuccess(
-                    "No Inventory Available.");
-
-            return;
-
-        }
-
-        String[] headers = {
-                "Inventory ID",
-                "Product ID",
-                "Product Name",
-                "Category",
-                "Seller",
-                "Quantity"
-        };
-
-        DisplayUtil.printTable(
-                "ALL INVENTORY",
-                headers,
-                buildInventoryRows(
-                        DataStore.INVENTORIES.values()
-                                .stream()
-                                .toList(),
-                        true));
+        );
 
     }
 
     /**
      * Builds Inventory Table Rows.
      *
-     * @param inventories Inventories
-     * @param includeSeller true to include Seller column
-     * @return Inventory Table Rows
+     * @param inventories Inventory List
+     * @param includeSeller Include Seller Column
+     * @return Table Rows
      */
     private List<String[]> buildInventoryRows(
-            List<Inventory> inventories, boolean includeSeller) {
+            List<Inventory> inventories,
+            boolean includeSeller) {
 
         return inventories.stream()
 
@@ -337,168 +452,51 @@ public class InventoryService {
             Inventory inventory) {
 
         DisplayUtil.printTable(
+
                 "INVENTORY DETAILS",
+
                 new String[]{
                         "Field",
                         "Value"
                 },
-                inventory.getTableRows());
+
+                inventory.getTableRows()
+
+        );
 
     }
-
     /**
-     * Finds Inventory using Inventory ID.
+     * Finds Inventory by Inventory ID.
      *
      * @param inventoryId Inventory ID
-     * @return Inventory if found, otherwise null
+     * @return Inventory
      */
     public Inventory findInventoryById(
             String inventoryId) {
 
-        return DataStore.INVENTORIES.get(
-                inventoryId.toUpperCase());
+        return inventoryDAO.findInventoryById(
+                inventoryId);
 
     }
 
     /**
-     * Finds Inventory using Product.
+     * Finds Inventory by Product.
      *
      * @param product Product
-     * @return Inventory if found, otherwise null
+     * @return Inventory
      */
     public Inventory findInventoryByProduct(
             Product product) {
 
-        return DataStore.INVENTORIES.values()
-                .stream()
-                .filter(inventory ->
-                        inventory.getProduct()
-                                .equals(product))
-                .findFirst()
-                .orElse(null);
-
-    }
-    /**
-     * Searches Seller Inventory.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void searchInventory(Seller seller) {
-
-        viewSellerInventory(seller);
-
-        Inventory inventory =
-                getSellerInventoryOrNull(seller);
-
-        if (inventory != null) {
-
-            displayInventory(inventory);
-
-        }
-
-    }
-
-    /**
-     * Searches Inventory.
-     * Used by Admin.
-     */
-    public void searchInventory() {
-
-        viewAllInventory();
-
-        Inventory inventory =
-                getInventoryOrNull();
-
-        if (inventory != null) {
-
-            displayInventory(inventory);
-
-        }
-
-    }
-
-    /**
-     * Updates Seller Stock.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void updateStock(Seller seller) {
-
-        viewSellerInventory(seller);
-
-        Inventory inventory =
-                getSellerInventoryOrNull(seller);
-
-        if (inventory != null) {
-
-            updateInventory(inventory);
-
-        }
-
-    }
-
-    /**
-     * Updates Stock.
-     * Used by Admin.
-     */
-    public void updateStock() {
-
-        viewAllInventory();
-
-        Inventory inventory =
-                getInventoryOrNull();
-
-        if (inventory != null) {
-
-            updateInventory(inventory);
-
-        }
-
-    }
-
-    /**
-     * Deletes Seller Stock.
-     *
-     * @param seller Logged-in Seller
-     */
-    public void deleteStock(Seller seller) {
-
-        viewSellerInventory(seller);
-
-        Inventory inventory =
-                getSellerInventoryOrNull(seller);
-
-        if (inventory != null) {
-
-            removeInventory(inventory);
-
-        }
-
-    }
-
-    /**
-     * Deletes Inventory.
-     * Used by Admin.
-     */
-    public void deleteStock() {
-
-        viewAllInventory();
-
-        Inventory inventory =
-                getInventoryOrNull();
-
-        if (inventory != null) {
-
-            removeInventory(inventory);
-
-        }
+        return inventoryDAO.findInventoryByProduct(
+                product.getProductId());
 
     }
 
     /**
      * Returns Inventory.
      *
-     * @return Inventory if found, otherwise null
+     * @return Inventory
      */
     private Inventory getInventoryOrNull() {
 
@@ -513,7 +511,7 @@ public class InventoryService {
 
         if (inventory == null) {
 
-            DisplayUtil.printSuccess(
+            DisplayUtil.printError(
                     "Inventory Not Found.");
 
         }
@@ -521,44 +519,29 @@ public class InventoryService {
         return inventory;
 
     }
-
     /**
      * Returns Seller Inventory.
      *
-     * @param seller Logged-in Seller
-     * @return Inventory if found, otherwise null
+     * @param seller Seller
+     * @return Inventory
      */
     private Inventory getSellerInventoryOrNull(
             Seller seller) {
 
-        Inventory inventory =
-                getInventoryOrNull();
+        return validateSellerInventory(
 
-        if (inventory == null) {
+                getInventoryOrNull(),
 
-            return null;
+                seller
 
-        }
-
-        if (!inventory.getProduct()
-                .getSeller()
-                .equals(seller)) {
-
-            DisplayUtil.printSuccess(
-                    "Inventory Not Found.");
-
-            return null;
-
-        }
-
-        return inventory;
+        );
 
     }
 
     /**
      * Returns Product.
      *
-     * @return Product if found, otherwise null
+     * @return Product
      */
     private Product getProductOrNull() {
 
@@ -569,11 +552,12 @@ public class InventoryService {
                         .toUpperCase();
 
         Product product =
-                productService.findProductById(productId);
+                productDAO.findProductById(
+                        productId);
 
         if (product == null) {
 
-            DisplayUtil.printSuccess(
+            DisplayUtil.printError(
                     "Product Not Found.");
 
         }
@@ -583,16 +567,115 @@ public class InventoryService {
     }
 
     /**
-     * Returns Seller Product.
+     * Adds Inventory to Product.
      *
-     * @param seller Logged-in Seller
-     * @return Product if found, otherwise null
+     * @param product Product
      */
-    private Product getSellerProductOrNull(
-            Seller seller) {
+    private void addStockToProduct(
+            Product product) {
 
-        Product product =
-                getProductOrNull();
+        if (product == null) {
+
+            return;
+
+        }
+
+        createInventory(product);
+
+    }
+
+    /**
+     * Displays Inventory Details.
+     *
+     * @param inventory Inventory
+     */
+    private void searchInventoryDetails(Inventory inventory) {
+
+        if (inventory == null) {
+
+            return;
+
+        }
+
+        displayInventory(inventory);
+
+    }
+
+    /**
+     * Updates Inventory Stock.
+     *
+     * @param inventory Inventory
+     */
+    private void updateInventoryStock(
+            Inventory inventory) {
+
+        if (inventory == null) {
+
+            return;
+
+        }
+
+        updateInventory(inventory);
+
+    }
+
+    /**
+     * Deletes Inventory Stock.
+     *
+     * @param inventory Inventory
+     */
+    private void deleteInventoryStock(
+            Inventory inventory) {
+
+        if (inventory == null) {
+
+            return;
+
+        }
+
+        removeInventory(inventory);
+
+    }
+
+    /**
+     * Validates Seller Inventory.
+     *
+     * @param inventory Inventory
+     * @param seller Seller
+     * @return Inventory
+     */
+    private Inventory validateSellerInventory(Inventory inventory, Seller seller) {
+
+        if (inventory == null) {
+
+            return null;
+
+        }
+
+        if (!inventory.getProduct()
+                .getSeller()
+                .getUserId()
+                .equals(seller.getUserId())) {
+
+            DisplayUtil.printError(
+                    "Inventory Not Found.");
+
+            return null;
+
+        }
+
+        return inventory;
+
+    }
+
+    /**
+     * Validates Seller Product.
+     *
+     * @param product Product
+     * @param seller Seller
+     * @return Product
+     */
+    private Product validateSellerProduct(Product product, Seller seller) {
 
         if (product == null) {
 
@@ -600,9 +683,11 @@ public class InventoryService {
 
         }
 
-        if (!product.getSeller().equals(seller)) {
+        if (!product.getSeller()
+                .getUserId()
+                .equals(seller.getUserId())) {
 
-            DisplayUtil.printSuccess(
+            DisplayUtil.printError(
                     "Product Not Found.");
 
             return null;
@@ -610,6 +695,24 @@ public class InventoryService {
         }
 
         return product;
+
+    }
+    /**
+     * Returns Seller Product.
+     *
+     * @param seller Seller
+     * @return Product
+     */
+    private Product getSellerProductOrNull(
+            Seller seller) {
+
+        return validateSellerProduct(
+
+                getProductOrNull(),
+
+                seller
+
+        );
 
     }
 
@@ -629,22 +732,26 @@ public class InventoryService {
                         InputUtil.readInt(
                                 "Enter New Quantity : ");
 
-                ValidationUtil.validateQuantity(quantity);
+                ValidationUtil.validateQuantity(
+                        quantity);
 
-                inventory.setQuantity(quantity);
+                inventory.setQuantity(
+                        quantity);
 
-                updateProductStatus(inventory);
+                inventoryDAO.updateQuantity(
+                        inventory);
+
+                updateProductStatus(
+                        inventory);
 
                 DisplayUtil.printSuccess(
                         "Stock Updated Successfully.");
 
                 break;
 
-            }
+            } catch (ValidationException exception) {
 
-            catch (ValidationException exception) {
-
-                DisplayUtil.printSuccess(
+                DisplayUtil.printError(
                         exception.getMessage());
 
             }
@@ -661,15 +768,123 @@ public class InventoryService {
     private void removeInventory(
             Inventory inventory) {
 
-        DataStore.INVENTORIES.remove(
+        inventoryDAO.deleteInventory(
                 inventory.getInventoryId());
 
         inventory.getProduct()
                 .setProductStatus(
                         ProductStatus.OUT_OF_STOCK);
 
+        productDAO.updateProductStatus(
+                inventory.getProduct());
+
         DisplayUtil.printSuccess(
                 "Inventory Deleted Successfully.");
+
+    }
+
+    /**
+     * Updates Product Status.
+     *
+     * @param inventory Inventory
+     */
+    private void updateProductStatus(
+            Inventory inventory) {
+
+        Product product =
+                inventory.getProduct();
+
+        if (inventory.getQuantity() == 0) {
+
+            product.setProductStatus(
+                    ProductStatus.OUT_OF_STOCK);
+
+        } else {
+
+            product.setProductStatus(
+                    ProductStatus.AVAILABLE);
+
+        }
+
+        productDAO.updateProductStatus(
+                product);
+
+    }
+
+    /**
+     * Checks whether Inventory exists.
+     *
+     * @param product Product
+     * @return true if exists
+     */
+    private boolean isInventoryExists(
+            Product product) {
+
+        return inventoryDAO.findInventoryByProduct(
+                product.getProductId()) != null;
+
+    }
+
+    /**
+     * Generates Inventory ID.
+     *
+     * @return Inventory ID
+     */
+    private String generateInventoryId() {
+
+        String inventoryId;
+
+        do {
+
+            inventoryId =
+                    IdGenerator.generateId("INV");
+
+        } while (inventoryDAO.findInventoryById(
+                inventoryId) != null);
+
+        return inventoryId;
+
+    }
+
+    /**
+     * Validates Inventory Availability.
+     *
+     * @return true if Inventory exists
+     */
+    private boolean validateInventoryAvailable() {
+
+        if (inventoryDAO.findAllInventory()
+                .isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Inventory Available.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Product Availability.
+     *
+     * @return true if Products exist
+     */
+    private boolean validateProductsAvailable() {
+
+        if (productDAO.findAllProducts()
+                .isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Products Available.");
+
+            return false;
+
+        }
+
+        return true;
 
     }
 

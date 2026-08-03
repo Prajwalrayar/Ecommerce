@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.SellerMapper">
+
+    <!-- ===================================================== -->
+    <!-- Result Map -->
+    <!-- ===================================================== -->
+
+    <resultMap id="SellerResultMap"
+               type="com.crimsonlogic.ecommerce.model.Seller">
+
+        <id property="userId"
+            column="user_id"/>
+
+        <result property="userName"
+                column="user_name"/>
+
+        <result property="userEmail"
+                column="user_email"/>
+
+        <result property="userPhNo"
+                column="user_phone"/>
+
+        <result property="userPassword"
+                column="user_password"/>
+
+        <result property="shopName"
+                column="shop_name"/>
+
+        <result property="shopAddress"
+                column="shop_address"/>
+
+        <association property="address"
+                     javaType="com.crimsonlogic.ecommerce.model.Address">
+
+            <id property="addressId"
+                column="address_id"/>
+
+            <result property="houseNumber"
+                    column="house_number"/>
+
+            <result property="street"
+                    column="street"/>
+
+            <result property="city"
+                    column="city"/>
+
+            <result property="state"
+                    column="state"/>
+
+            <result property="country"
+                    column="country"/>
+
+            <result property="zipCode"
+                    column="zip_code"/>
+
+        </association>
+
+    </resultMap>
+
+    <!-- ===================================================== -->
+    <!-- Insert -->
+    <!-- ===================================================== -->
+
+    <insert id="insertSeller">
+
+        INSERT INTO sellers(
+
+        user_id,
+
+        user_name,
+
+        user_email,
+
+        user_phone,
+
+        user_password,
+
+        shop_name,
+
+        shop_address,
+
+        address_id
+
+        )
+
+        VALUES(
+
+        #{userId},
+
+        #{userName},
+
+        #{userEmail},
+
+        #{userPhNo},
+
+        #{userPassword},
+
+        #{shopName},
+
+        #{shopAddress},
+
+        #{address.addressId}
+
+        )
+
+    </insert>
+
+    <!-- ===================================================== -->
+    <!-- Update -->
+    <!-- ===================================================== -->
+
+    <update id="updateSeller">
+
+        UPDATE sellers
+
+        SET
+
+        user_name = #{userName},
+
+        user_email = #{userEmail},
+
+        user_phone = #{userPhNo},
+
+        user_password = #{userPassword},
+
+        shop_name = #{shopName},
+
+        shop_address = #{shopAddress},
+
+        address_id = #{address.addressId}
+
+        WHERE user_id = #{userId}
+
+    </update>
+
+    <!-- ===================================================== -->
+    <!-- Delete -->
+    <!-- ===================================================== -->
+
+    <delete id="deleteSeller">
+
+        DELETE FROM sellers
+
+        WHERE user_id = #{userId}
+
+    </delete>
+
+    <!-- ===================================================== -->
+    <!-- Find By ID -->
+    <!-- ===================================================== -->
+
+    <select id="findSellerById"
+            resultMap="SellerResultMap">
+
+        SELECT
+
+        s.*,
+
+        a.*
+
+        FROM sellers s
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE s.user_id = #{userId}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Email -->
+    <!-- ===================================================== -->
+
+    <select id="findSellerByEmail"
+            resultMap="SellerResultMap">
+
+        SELECT
+
+        s.*,
+
+        a.*
+
+        FROM sellers s
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE s.user_email = #{email}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find By Phone -->
+    <!-- ===================================================== -->
+
+    <select id="findSellerByPhone"
+            resultMap="SellerResultMap">
+
+        SELECT
+
+        s.*,
+
+        a.*
+
+        FROM sellers s
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        WHERE s.user_phone = #{phone}
+
+    </select>
+
+    <!-- ===================================================== -->
+    <!-- Find All -->
+    <!-- ===================================================== -->
+
+    <select id="findAllSellers"
+            resultMap="SellerResultMap">
+
+        SELECT
+
+        s.*,
+
+        a.*
+
+        FROM sellers s
+
+        LEFT JOIN address a
+
+        ON s.address_id = a.address_id
+
+        ORDER BY s.user_name
+
+    </select>
+
+</mapper>

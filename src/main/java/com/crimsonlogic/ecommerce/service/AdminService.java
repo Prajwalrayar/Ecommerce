@@ -1,106 +1,96 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CustomerDAO;
+import com.crimsonlogic.ecommerce.dao.SellerDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.UserNotFoundException;
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
-
 import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Service class responsible for Admin operations.
  */
 public class AdminService {
 
+    private final CustomerDAO customerDAO = new CustomerDAO();
+
+    private final SellerDAO sellerDAO = new SellerDAO();
+
+    private static final String[] CUSTOMER_HEADERS = {
+
+            "Customer ID",
+
+            "Name",
+
+            "Email",
+
+            "Phone Number"
+
+    };
+
+    private static final String[] SELLER_HEADERS = {
+            "Seller ID",
+            "Name",
+            "Email",
+            "Phone Number",
+            "Shop Name"
+    };
+
     /**
-     * Displays all registered Customers.
+     * Displays all Customers.
      */
     public void viewAllCustomers() {
 
-        if (DataStore.CUSTOMERS.isEmpty()) {
-
-            DisplayUtil.printWarning("No Customers Found.");
+        if (!validateCustomers()) {
 
             return;
 
         }
 
-        String[] headers = {
-                "Customer ID",
-                "Name",
-                "Email",
-                "Phone Number"
-        };
+        displayCustomers(
 
-        List<String[]> rows = DataStore.CUSTOMERS.values()
-                .stream()
-                .map(customer -> new String[]{
-                        customer.getUserId(),
-                        customer.getUserName(),
-                        customer.getUserEmail(),
-                        customer.getUserPhNo()
-                })
-                .collect(Collectors.toList());
+                customerDAO.findAllCustomers(),
 
-        DisplayUtil.printTable(
-                "CUSTOMERS",
-                headers,
-                rows);
+                "CUSTOMERS"
+
+        );
 
     }
 
     /**
-     * Displays all registered Sellers.
+     * Displays all Sellers.
      */
     public void viewAllSellers() {
 
-        if (DataStore.SELLERS.isEmpty()) {
-
-            DisplayUtil.printWarning("No Sellers Found.");
+        if (!validateSellers()) {
 
             return;
 
         }
 
-        String[] headers = {
-                "Seller ID",
-                "Name",
-                "Email",
-                "Phone Number",
-                "Shop Name"
-        };
+        displaySellers(
 
-        List<String[]> rows = DataStore.SELLERS.values()
-                .stream()
-                .map(seller -> new String[]{
-                        seller.getUserId(),
-                        seller.getUserName(),
-                        seller.getUserEmail(),
-                        seller.getUserPhNo(),
-                        seller.getShopName()
-                })
-                .collect(Collectors.toList());
+                sellerDAO.findAllSellers(),
 
-        DisplayUtil.printTable(
-                "SELLERS",
-                headers,
-                rows);
+                "SELLERS"
+
+        );
 
     }
 
     /**
-     * Deletes a Customer.
+     * Deletes Customer.
      *
      * @param customerId Customer ID
      */
-    public void deleteCustomer(String customerId) {
+    public void deleteCustomer(
+            String customerId) {
 
         try {
 
             Customer customer =
-                    DataStore.CUSTOMERS.remove(customerId);
+                    customerDAO.findCustomerById(
+                            customerId);
 
             if (customer == null) {
 
@@ -108,6 +98,9 @@ public class AdminService {
                         "Customer Not Found.");
 
             }
+
+            customerDAO.deleteCustomer(
+                    customerId);
 
             DisplayUtil.printSuccess(
                     "Customer Deleted Successfully.");
@@ -122,16 +115,18 @@ public class AdminService {
     }
 
     /**
-     * Deletes a Seller.
+     * Deletes Seller.
      *
      * @param sellerId Seller ID
      */
-    public void deleteSeller(String sellerId) {
+    public void deleteSeller(
+            String sellerId) {
 
         try {
 
             Seller seller =
-                    DataStore.SELLERS.remove(sellerId);
+                    sellerDAO.findSellerById(
+                            sellerId);
 
             if (seller == null) {
 
@@ -139,6 +134,9 @@ public class AdminService {
                         "Seller Not Found.");
 
             }
+
+            sellerDAO.deleteSeller(
+                    sellerId);
 
             DisplayUtil.printSuccess(
                     "Seller Deleted Successfully.");
@@ -149,6 +147,148 @@ public class AdminService {
                     exception.getMessage());
 
         }
+
+    }
+
+    /**
+     * Validates Customers.
+     *
+     * @return true if customers exist
+     */
+    private boolean validateCustomers() {
+
+        if (customerDAO.findAllCustomers().isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Customers Found.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Validates Sellers.
+     *
+     * @return true if sellers exist
+     */
+    private boolean validateSellers() {
+
+        if (sellerDAO.findAllSellers().isEmpty()) {
+
+            DisplayUtil.printWarning(
+                    "No Sellers Found.");
+
+            return false;
+
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Displays Customers.
+     *
+     * @param customers Customers
+     * @param title Table Title
+     */
+    private void displayCustomers(
+            List<Customer> customers,
+            String title) {
+
+        DisplayUtil.printTable(
+
+                title,
+
+                CUSTOMER_HEADERS,
+
+                buildCustomerRows(
+                        customers)
+
+        );
+
+    }
+
+    /**
+     * Displays Sellers.
+     *
+     * @param sellers Sellers
+     * @param title Table Title
+     */
+    private void displaySellers(
+            List<Seller> sellers,
+            String title) {
+
+        DisplayUtil.printTable(
+
+                title,
+
+                SELLER_HEADERS,
+
+                buildSellerRows(
+                        sellers)
+
+        );
+
+    }
+
+    /**
+     * Builds Customer Rows.
+     *
+     * @param customers Customers
+     * @return Table Rows
+     */
+    private List<String[]> buildCustomerRows(
+            List<Customer> customers) {
+
+        return customers.stream()
+
+                .map(customer -> new String[]{
+
+                        customer.getUserId(),
+
+                        customer.getUserName(),
+
+                        customer.getUserEmail(),
+
+                        customer.getUserPhNo()
+
+                })
+
+                .toList();
+
+    }
+
+    /**
+     * Builds Seller Rows.
+     *
+     * @param sellers Sellers
+     * @return Table Rows
+     */
+    private List<String[]> buildSellerRows(
+            List<Seller> sellers) {
+
+        return sellers.stream()
+
+                .map(seller -> new String[]{
+
+                        seller.getUserId(),
+
+                        seller.getUserName(),
+
+                        seller.getUserEmail(),
+
+                        seller.getUserPhNo(),
+
+                        seller.getShopName()
+
+                })
+
+                .toList();
 
     }
 

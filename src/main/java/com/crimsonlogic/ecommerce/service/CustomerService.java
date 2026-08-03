@@ -1,12 +1,13 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.CustomerDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.UserNotFoundException;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Address;
 import com.crimsonlogic.ecommerce.model.Customer;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.service.abstraction.UserService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
+import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
@@ -15,11 +16,9 @@ import com.crimsonlogic.ecommerce.util.ValidationUtil;
  */
 public class CustomerService extends UserService<Customer> {
 
-    /**
-     * Updates Customer Profile.
-     *
-     * @param customer Logged-in Customer
-     */
+    private final CustomerDAO customerDAO = new CustomerDAO();
+
+    // Updates Customer Profile for a Logged-in Customer
     @Override
     public void updateProfile(Customer customer) {
 
@@ -31,43 +30,30 @@ public class CustomerService extends UserService<Customer> {
         while (true) {
 
             try {
-
-                String houseNumber = InputUtil.readOptionalString(
-                        "Enter House Number (Press Enter to Skip): ");
-
+                String houseNumber = InputUtil.readOptionalString("Enter House Number: ");
                 if (houseNumber == null) {
-
                     customer.setAddress(null);
+                    customerDAO.updateCustomer(customer);
                     break;
-
                 }
+                String street = InputUtil.readString("Enter Street: ");
 
-                String street =
-                        InputUtil.readString("Enter Street: ");
+                String city = InputUtil.readString("Enter City: ");
 
-                String city =
-                        InputUtil.readString("Enter City: ");
+                String state = InputUtil.readString("Enter State: ");
 
-                String state =
-                        InputUtil.readString("Enter State: ");
+                String country = InputUtil.readString("Enter Country: ");
 
-                String country =
-                        InputUtil.readString("Enter Country: ");
+                String zipCode = InputUtil.readString("Enter Zip Code: ");
 
-                String zipCode =
-                        InputUtil.readString("Enter Zip Code: ");
-
-                Address address = new Address(
-                        houseNumber,
-                        street,
-                        city,
-                        state,
-                        country,
-                        zipCode);
+                Address address = new Address(IdGenerator.generateId("ADDR"),
+                        houseNumber, street, city, state, country, zipCode);
 
                 ValidationUtil.validateAddress(address);
 
                 customer.setAddress(address);
+
+                customerDAO.updateCustomer(customer);
 
                 break;
 
@@ -84,36 +70,18 @@ public class CustomerService extends UserService<Customer> {
 
     }
 
-    /**
-     * Deletes Customer Account.
-     *
-     * @param customer Logged-in Customer
-     * @return true if deleted successfully, otherwise false
-     */
+    // Deletes Customer Account.
     public boolean deleteAccount(Customer customer) {
 
         try {
-
-            Customer deletedCustomer =
-                    DataStore.CUSTOMERS.remove(customer.getUserId());
-
-            if (deletedCustomer == null) {
-
-                throw new UserNotFoundException(
-                        "Customer Account Not Found.");
-
+            if (customerDAO.findCustomerById(customer.getUserId()) == null) {
+                throw new UserNotFoundException("Customer Account Not Found.");
             }
-
+            customerDAO.deleteCustomer(customer.getUserId());
             return true;
-
         } catch (UserNotFoundException exception) {
-
             DisplayUtil.printMessage(exception.getMessage());
-
             return false;
-
         }
-
     }
-
 }

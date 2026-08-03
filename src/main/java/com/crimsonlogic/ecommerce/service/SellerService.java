@@ -1,9 +1,9 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.SellerDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.UserNotFoundException;
 import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.repository.DataStore;
 import com.crimsonlogic.ecommerce.service.abstraction.UserService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -14,30 +14,38 @@ import com.crimsonlogic.ecommerce.util.ValidationUtil;
  */
 public class SellerService extends UserService<Seller> {
 
+    private final SellerDAO sellerDAO = new SellerDAO();
+
     /**
      * Updates Seller Profile.
      *
      * @param seller Logged-in Seller
      */
     @Override
-    public void updateProfile(Seller seller) {
+    public void updateProfile(
+            Seller seller) {
 
         // Update common user details
         super.updateProfile(seller);
 
-        System.out.println("\n========== UPDATE SHOP DETAILS ==========");
+        System.out.println(
+                "\n========== UPDATE SHOP DETAILS ==========");
 
         while (true) {
 
             try {
 
-                String shopName = InputUtil.readOptionalString(
-                        "Enter Shop Name (Press Enter to Skip): ");
+                String shopName =
+                        InputUtil.readOptionalString(
+                                "Enter Shop Name (Press Enter to Skip): ");
 
                 if (shopName != null) {
 
-                    ValidationUtil.validateShopName(shopName);
-                    seller.setShopName(shopName);
+                    ValidationUtil.validateShopName(
+                            shopName);
+
+                    seller.setShopName(
+                            shopName);
 
                 }
 
@@ -45,20 +53,26 @@ public class SellerService extends UserService<Seller> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printError(
+                        exception.getMessage());
 
             }
 
         }
 
-        String shopAddress = InputUtil.readOptionalString(
-                "Enter Shop Address (Press Enter to Skip): ");
+        String shopAddress =
+                InputUtil.readOptionalString(
+                        "Enter Shop Address (Press Enter to Skip): ");
 
         if (shopAddress != null) {
 
-            seller.setShopAddress(shopAddress);
+            seller.setShopAddress(
+                    shopAddress);
 
         }
+
+        sellerDAO.updateSeller(
+                seller);
 
         DisplayUtil.printSuccess(
                 "Seller Profile Updated Successfully.");
@@ -69,27 +83,30 @@ public class SellerService extends UserService<Seller> {
      * Deletes Seller Account.
      *
      * @param seller Logged-in Seller
-     * @return true if deleted successfully, otherwise false
+     * @return true if deleted successfully
      */
-    public boolean deleteAccount(Seller seller) {
+    public boolean deleteAccount(
+            Seller seller) {
 
         try {
 
-            Seller deletedSeller =
-                    DataStore.SELLERS.remove(seller.getUserId());
-
-            if (deletedSeller == null) {
+            if (sellerDAO.findSellerById(
+                    seller.getUserId()) == null) {
 
                 throw new UserNotFoundException(
                         "Seller Account Not Found.");
 
             }
 
+            sellerDAO.deleteSeller(
+                    seller.getUserId());
+
             return true;
 
         } catch (UserNotFoundException exception) {
 
-            DisplayUtil.printMessage(exception.getMessage());
+            DisplayUtil.printMessage(
+                    exception.getMessage());
 
             return false;
 
