@@ -28,16 +28,13 @@ public class SellerService extends UserService<Seller> {
         // Update common user details
         super.updateProfile(seller);
 
-        System.out.println(
-                "\n========== UPDATE SHOP DETAILS ==========");
-
         while (true) {
 
             try {
 
                 String shopName =
                         InputUtil.readOptionalString(
-                                "Enter Shop Name (Press Enter to Skip): ");
+                                "Enter Shop Name: ");
 
                 if (shopName != null) {
 
@@ -53,7 +50,7 @@ public class SellerService extends UserService<Seller> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }

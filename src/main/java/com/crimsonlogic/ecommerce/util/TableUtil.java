@@ -28,7 +28,7 @@ public final class TableUtil {
 
         if (rows.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     emptyMessage);
 
             return false;

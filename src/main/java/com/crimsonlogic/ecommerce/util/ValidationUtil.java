@@ -159,6 +159,69 @@ public class ValidationUtil {
         }
     }
 
+    public static void validateShopAddress(String shopAddress)
+            throws ValidationException {
+
+        if (shopAddress == null || shopAddress.trim().isEmpty()) {
+
+            throw new ValidationException(
+                    "Shop Address cannot be empty.");
+
+        }
+
+        if (shopAddress.length() < 5) {
+
+            throw new ValidationException(
+                    "Shop Address is too short.");
+
+        }
+
+        if (shopAddress.length() > 255) {
+
+            throw new ValidationException(
+                    "Shop Address cannot exceed 255 characters.");
+
+        }
+
+    }
+
+    /**
+     * Validates Seller Address.
+     *
+     * @param address Seller Address
+     * @throws ValidationException if address is invalid
+     */
+    public static void validateSellerAddress(Address address)
+            throws ValidationException {
+
+        if (address == null) {
+
+            throw new ValidationException(
+                    "Address cannot be empty.");
+
+        }
+
+        validateField(
+                address.getStreet(),
+                "Street");
+
+        validateField(
+                address.getCity(),
+                "City");
+
+        validateField(
+                address.getState(),
+                "State");
+
+        validateField(
+                address.getCountry(),
+                "Country");
+
+        validateZipCode(
+                address.getZipCode());
+
+    }
+
     /**
      * Validates Category Description.
      *

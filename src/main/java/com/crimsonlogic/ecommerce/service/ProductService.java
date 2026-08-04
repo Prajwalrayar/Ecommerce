@@ -246,7 +246,7 @@ public class ProductService {
 
         if (products.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Products Found.");
 
             return;
@@ -308,7 +308,7 @@ public class ProductService {
                         productName,
                         seller)) {
 
-                    DisplayUtil.printWarning(
+                    DisplayUtil.printMessage(
                             "Product Already Exists.");
 
                     return;
@@ -370,7 +370,7 @@ public class ProductService {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -391,7 +391,7 @@ public class ProductService {
 
         if (products.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Products Available.");
 
             return;
@@ -465,7 +465,7 @@ public class ProductService {
 
         if (category == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Category Not Found.");
 
         }
@@ -492,7 +492,7 @@ public class ProductService {
 
         if (product == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Product Not Found.");
 
         }
@@ -522,7 +522,7 @@ public class ProductService {
                 .getUserId()
                 .equals(seller.getUserId())) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Product Does Not Belong To You.");
 
             return null;
@@ -604,7 +604,7 @@ public class ProductService {
 
         if (!hasProducts()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Products Available.");
 
             return false;
@@ -625,7 +625,7 @@ public class ProductService {
         if (categoryDAO.findAllCategories()
                 .isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Categories Available.");
 
             return false;
@@ -740,7 +740,7 @@ public class ProductService {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }

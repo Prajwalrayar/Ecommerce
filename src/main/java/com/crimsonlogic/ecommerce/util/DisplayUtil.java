@@ -113,43 +113,12 @@ public class DisplayUtil {
         System.out.println();
 
     }
-
-    /**
-     * Prints an Error Message.
-     *
-     * @param message Error Message
-     */
-    public static void printError(String message) {
-
-        System.out.println();
-
-        System.out.println("ERROR : " + message);
-
-        System.out.println();
-
-    }
-
     public static void printInvalidChoice() {
         System.out.println();
         System.out.println("Invalid Choice! Please try again.");
         System.out.println();
 
     }
-    /**
-     * Prints a Warning Message.
-     *
-     * @param message Warning Message
-     */
-    public static void printWarning(String message) {
-
-        System.out.println();
-
-        System.out.println("WARNING : " + message);
-
-        System.out.println();
-
-    }
-
     /**
      * Prints a Heading.
      *
@@ -165,12 +134,8 @@ public class DisplayUtil {
 
     }
 
-    /**
-     * Prints a formatted message.
-     *
-     * @param title Message Title
-     * @param message Message Content
-     */
+    // Prints a formatted message.
+
     public static void printMessage(String message) {
 
         System.out.println();

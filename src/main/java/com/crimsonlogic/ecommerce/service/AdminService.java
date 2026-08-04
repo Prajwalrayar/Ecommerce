@@ -107,7 +107,7 @@ public class AdminService {
 
         } catch (UserNotFoundException exception) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     exception.getMessage());
 
         }
@@ -143,7 +143,7 @@ public class AdminService {
 
         } catch (UserNotFoundException exception) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     exception.getMessage());
 
         }
@@ -159,7 +159,7 @@ public class AdminService {
 
         if (customerDAO.findAllCustomers().isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Customers Found.");
 
             return false;
@@ -179,7 +179,7 @@ public class AdminService {
 
         if (sellerDAO.findAllSellers().isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Sellers Found.");
 
             return false;

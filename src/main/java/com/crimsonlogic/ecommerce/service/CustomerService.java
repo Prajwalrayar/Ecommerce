@@ -59,7 +59,7 @@ public class CustomerService extends UserService<Customer> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printMessage(exception.getMessage());
 
             }
 

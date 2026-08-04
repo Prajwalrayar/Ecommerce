@@ -38,8 +38,7 @@ public class CategoryService {
 
                 if (categoryDAO.findCategoryByName(categoryName) != null) {
 
-                    DisplayUtil.printError(
-                            "Category already exists.");
+                    DisplayUtil.printMessage("Category already exists.");
 
                     return;
 
@@ -70,7 +69,7 @@ public class CategoryService {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -89,7 +88,7 @@ public class CategoryService {
 
         if (categories.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Categories Available.");
 
             return;
@@ -128,7 +127,7 @@ public class CategoryService {
 
         if (categories.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Categories Available.");
 
             return;
@@ -144,7 +143,7 @@ public class CategoryService {
 
         if (category == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Category Not Found.");
 
             return;
@@ -185,7 +184,7 @@ public class CategoryService {
 
         if (categories.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Categories Available.");
 
             return;
@@ -203,7 +202,7 @@ public class CategoryService {
 
         if (category == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Category Not Found.");
 
             return;
@@ -228,7 +227,7 @@ public class CategoryService {
                         !existing.getCategoryId()
                                 .equals(categoryId)) {
 
-                    DisplayUtil.printError(
+                    DisplayUtil.printMessage(
                             "Category already exists.");
 
                     continue;
@@ -255,7 +254,7 @@ public class CategoryService {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -274,7 +273,7 @@ public class CategoryService {
 
         if (categories.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Categories Available.");
 
             return;
@@ -292,7 +291,7 @@ public class CategoryService {
 
         if (category == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Category Not Found.");
 
             return;
