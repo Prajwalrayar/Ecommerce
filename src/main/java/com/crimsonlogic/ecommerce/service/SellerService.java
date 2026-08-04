@@ -1,8 +1,8 @@
 package com.crimsonlogic.ecommerce.service;
 
 import com.crimsonlogic.ecommerce.dao.SellerDAO;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.UserNotFoundException;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.UserNotFoundException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Seller;
 import com.crimsonlogic.ecommerce.service.abstraction.UserService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;

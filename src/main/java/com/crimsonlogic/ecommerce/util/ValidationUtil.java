@@ -1,5 +1,5 @@
 package com.crimsonlogic.ecommerce.util;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Address;
 
 import java.util.regex.Pattern;

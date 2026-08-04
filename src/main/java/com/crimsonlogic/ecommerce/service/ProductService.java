@@ -3,7 +3,7 @@ package com.crimsonlogic.ecommerce.service;
 import com.crimsonlogic.ecommerce.dao.CategoryDAO;
 import com.crimsonlogic.ecommerce.dao.ProductDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Category;
 import com.crimsonlogic.ecommerce.model.Product;
 import com.crimsonlogic.ecommerce.model.Seller;
