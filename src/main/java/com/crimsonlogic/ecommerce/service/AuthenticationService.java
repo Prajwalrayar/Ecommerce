@@ -11,10 +11,7 @@ import com.crimsonlogic.ecommerce.model.Address;
 import com.crimsonlogic.ecommerce.model.Admin;
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.util.DisplayUtil;
-import com.crimsonlogic.ecommerce.util.IdGenerator;
-import com.crimsonlogic.ecommerce.util.InputUtil;
-import com.crimsonlogic.ecommerce.util.ValidationUtil;
+import com.crimsonlogic.ecommerce.util.*;
 
 /**
  * Handles registration, login and logout operations
@@ -57,7 +54,9 @@ public class AuthenticationService {
 
         String phone = readValidPhone();
 
-        String password = readValidPassword();
+        String password =
+                PasswordUtil.encryptPassword(
+                        readValidPassword());
 
         String shopName = readValidShopName();
 
@@ -557,9 +556,9 @@ public class AuthenticationService {
                         "Invalid Email or Password.");
 
             }
-
-            if (!admin.getUserPassword()
-                    .equals(password)) {
+            if (!PasswordUtil.verifyPassword(
+                    password,
+                    admin.getUserPassword())) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
@@ -587,7 +586,7 @@ public class AuthenticationService {
      *
      * @return Logged-in Seller
      */
-    public Seller loginSeller() {
+    public Seller loginSeller()     {
 
         try {
 
@@ -611,9 +610,9 @@ public class AuthenticationService {
                         "Invalid Email or Password.");
 
             }
-
-            if (!seller.getUserPassword()
-                    .equals(password)) {
+            if (!PasswordUtil.verifyPassword(
+                    password,
+                    seller.getUserPassword())) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");
@@ -665,9 +664,9 @@ public class AuthenticationService {
                         "Invalid Email or Password.");
 
             }
-
-            if (!customer.getUserPassword()
-                    .equals(password)) {
+            if (!PasswordUtil.verifyPassword(
+                    password,
+                    customer.getUserPassword())) {
 
                 throw new InvalidCredentialsException(
                         "Invalid Email or Password.");

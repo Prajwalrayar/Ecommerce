@@ -15,6 +15,7 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j:8.0.33")
 
     implementation("org.mybatis:mybatis:3.5.19")
+    implementation("org.mindrot:jbcrypt:0.4")
 }
 
 tasks.test {
