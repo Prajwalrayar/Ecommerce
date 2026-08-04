@@ -1,5 +1,5 @@
 package com.crimsonlogic.ecommerce.util;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Address;
 
 import java.util.regex.Pattern;
@@ -46,15 +46,33 @@ public class ValidationUtil {
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[1-9][0-9]{5}$");
 
     // User Name Validation
-    public static void validateUserName(String userName) throws ValidationException {
+    public static void validateUserName(
+            String name)
+            throws ValidationException {
 
-        if (userName == null || userName.trim().isEmpty()) {
-            throw new ValidationException("User Name cannot be empty.");
-        }
-        if (!NAME_PATTERN.matcher(userName.trim()).matches()) {
+        validateField(name, "Name");
+
+        if (!NAME_PATTERN.matcher(name).matches()) {
+
             throw new ValidationException(
-                    "User Name should contain only alphabets and spaces.");
+                    "Invalid Name.");
+
         }
+
+        if (hasRepeatedCharacters(name)) {
+
+            throw new ValidationException(
+                    "Name cannot contain more than two consecutive identical characters.");
+
+        }
+
+        if (hasAlphabetSequence(name.replace(" ", ""))) {
+
+            throw new ValidationException(
+                    "Name cannot contain alphabetical sequences.");
+
+        }
+
     }
     // Email Validation
 
@@ -64,6 +82,23 @@ public class ValidationUtil {
         }
         if (!EMAIL_PATTERN.matcher(email.trim()).matches()) {
             throw new ValidationException("Invalid Email Address.");
+        }
+
+        String emailPrefix =
+                email.substring(0, email.indexOf('@'));
+
+        if (hasRepeatedCharacters(emailPrefix)) {
+
+            throw new ValidationException(
+                    "Email username cannot contain more than two consecutive identical characters.");
+
+        }
+
+        if (hasAlphabetSequence(emailPrefix)) {
+
+            throw new ValidationException(
+                    "Email username cannot contain alphabetical sequences.");
+
         }
     }
     // Phone Number Validation
@@ -157,6 +192,69 @@ public class ValidationUtil {
             throw new ValidationException(
                     "Category Name should contain only alphabets and spaces (3-30 characters).");
         }
+    }
+
+    public static void validateShopAddress(String shopAddress)
+            throws ValidationException {
+
+        if (shopAddress == null || shopAddress.trim().isEmpty()) {
+
+            throw new ValidationException(
+                    "Shop Address cannot be empty.");
+
+        }
+
+        if (shopAddress.length() < 5) {
+
+            throw new ValidationException(
+                    "Shop Address is too short.");
+
+        }
+
+        if (shopAddress.length() > 255) {
+
+            throw new ValidationException(
+                    "Shop Address cannot exceed 255 characters.");
+
+        }
+
+    }
+
+    /**
+     * Validates Seller Address.
+     *
+     * @param address Seller Address
+     * @throws ValidationException if address is invalid
+     */
+    public static void validateSellerAddress(Address address)
+            throws ValidationException {
+
+        if (address == null) {
+
+            throw new ValidationException(
+                    "Address cannot be empty.");
+
+        }
+
+        validateField(
+                address.getStreet(),
+                "Street");
+
+        validateField(
+                address.getCity(),
+                "City");
+
+        validateField(
+                address.getState(),
+                "State");
+
+        validateField(
+                address.getCountry(),
+                "Country");
+
+        validateZipCode(
+                address.getZipCode());
+
     }
 
     /**
@@ -270,6 +368,75 @@ public class ValidationUtil {
                     "Quantity cannot be negative.");
 
         }
+
+    }
+
+    /**
+     * Checks if a string contains more than
+     * two consecutive identical characters.
+     */
+    private static boolean hasRepeatedCharacters(
+            String value) {
+
+        int count = 1;
+
+        for (int i = 1; i < value.length(); i++) {
+
+            if (Character.toLowerCase(value.charAt(i))
+                    == Character.toLowerCase(value.charAt(i - 1))) {
+
+                count++;
+
+                if (count >= 3) {
+
+                    return true;
+
+                }
+
+            } else {
+
+                count = 1;
+
+            }
+
+        }
+
+        return false;
+
+    }
+
+    /**
+     * Checks whether the string contains
+     * alphabetical sequence like abc, xyz, mno.
+     */
+    private static boolean hasAlphabetSequence(
+            String value) {
+
+        value = value.toLowerCase();
+
+        for (int i = 0; i < value.length() - 2; i++) {
+
+            char a = value.charAt(i);
+
+            char b = value.charAt(i + 1);
+
+            char c = value.charAt(i + 2);
+
+            if (Character.isLetter(a)
+                    && Character.isLetter(b)
+                    && Character.isLetter(c)) {
+
+                if (b == a + 1 && c == b + 1) {
+
+                    return true;
+
+                }
+
+            }
+
+        }
+
+        return false;
 
     }
     // Helper Method

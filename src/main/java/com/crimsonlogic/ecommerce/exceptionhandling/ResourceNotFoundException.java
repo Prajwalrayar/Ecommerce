@@ -1,4 +1,4 @@
-package com.crimsonlogic.ecommerce.exceptionhandling.user;
+package com.crimsonlogic.ecommerce.exceptionhandling;
 
 /**
  * Thrown when the requested resource

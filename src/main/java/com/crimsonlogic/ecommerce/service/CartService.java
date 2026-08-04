@@ -3,7 +3,7 @@ package com.crimsonlogic.ecommerce.service;
 import com.crimsonlogic.ecommerce.dao.CartDAO;
 import com.crimsonlogic.ecommerce.dao.InventoryDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Cart;
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Inventory;
@@ -87,7 +87,7 @@ public class CartService {
 
         if (carts.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Your Cart is Empty.");
 
             return;
@@ -263,7 +263,7 @@ public class CartService {
 
             catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -300,7 +300,7 @@ public class CartService {
 
         if (product == null) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Product Not Found.");
 
             return null;
@@ -318,7 +318,7 @@ public class CartService {
 
         if (cart == null) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Cart Item Not Found.");
 
         }
@@ -359,7 +359,7 @@ public class CartService {
 
         if (product == null) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Product Not Found.");
 
         }
@@ -516,7 +516,7 @@ public class CartService {
 
             catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -572,7 +572,7 @@ public class CartService {
 
         if (inventory == null) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Inventory Not Found.");
 
             return false;
@@ -582,7 +582,7 @@ public class CartService {
         if (product.getProductStatus()
                 == ProductStatus.OUT_OF_STOCK) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Product is Out Of Stock.");
 
             return false;
@@ -605,7 +605,7 @@ public class CartService {
 
         if (quantity > inventory.getQuantity()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
 
                     "Only "
 
@@ -634,7 +634,7 @@ public class CartService {
 
         if (getCustomerCart(customer).isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "Your Cart is Empty.");
 
             return false;
@@ -670,7 +670,7 @@ public class CartService {
 
         if (!available) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Products Available.");
 
             return false;

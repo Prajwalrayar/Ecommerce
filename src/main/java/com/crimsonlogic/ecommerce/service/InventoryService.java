@@ -3,7 +3,7 @@ package com.crimsonlogic.ecommerce.service;
 import com.crimsonlogic.ecommerce.dao.InventoryDAO;
 import com.crimsonlogic.ecommerce.dao.ProductDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Inventory;
 import com.crimsonlogic.ecommerce.model.Product;
 import com.crimsonlogic.ecommerce.model.Seller;
@@ -289,7 +289,7 @@ public class InventoryService {
 
                 if (isInventoryExists(product)) {
 
-                    DisplayUtil.printWarning(
+                    DisplayUtil.printMessage(
                             "Inventory Already Exists.");
 
                     return;
@@ -332,7 +332,7 @@ public class InventoryService {
 
             catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -353,7 +353,7 @@ public class InventoryService {
 
         if (inventories.isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Inventory Available.");
 
             return;
@@ -511,7 +511,7 @@ public class InventoryService {
 
         if (inventory == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Inventory Not Found.");
 
         }
@@ -557,7 +557,7 @@ public class InventoryService {
 
         if (product == null) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Product Not Found.");
 
         }
@@ -657,7 +657,7 @@ public class InventoryService {
                 .getUserId()
                 .equals(seller.getUserId())) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Inventory Not Found.");
 
             return null;
@@ -687,7 +687,7 @@ public class InventoryService {
                 .getUserId()
                 .equals(seller.getUserId())) {
 
-            DisplayUtil.printError(
+            DisplayUtil.printMessage(
                     "Product Not Found.");
 
             return null;
@@ -751,7 +751,7 @@ public class InventoryService {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }
@@ -856,7 +856,7 @@ public class InventoryService {
         if (inventoryDAO.findAllInventory()
                 .isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Inventory Available.");
 
             return false;
@@ -877,7 +877,7 @@ public class InventoryService {
         if (productDAO.findAllProducts()
                 .isEmpty()) {
 
-            DisplayUtil.printWarning(
+            DisplayUtil.printMessage(
                     "No Products Available.");
 
             return false;

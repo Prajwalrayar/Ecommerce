@@ -4,9 +4,9 @@ import com.crimsonlogic.ecommerce.dao.AddressDAO;
 import com.crimsonlogic.ecommerce.dao.AdminDAO;
 import com.crimsonlogic.ecommerce.dao.CustomerDAO;
 import com.crimsonlogic.ecommerce.dao.SellerDAO;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.DuplicateUserException;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.InvalidCredentialsException;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.DuplicateUserException;
+import com.crimsonlogic.ecommerce.exceptionhandling.InvalidCredentialsException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Address;
 import com.crimsonlogic.ecommerce.model.Admin;
 import com.crimsonlogic.ecommerce.model.Customer;
@@ -59,36 +59,13 @@ public class AuthenticationService {
 
         String password = readValidPassword();
 
-        String shopName;
+        String shopName = readValidShopName();
 
-        while (true) {
+        String shopAddress = readValidShopAddress();
 
-            try {
+        Address address = createSellerAddress();
 
-                shopName = InputUtil.readString("Enter Shop Name: ");
-
-                ValidationUtil.validateShopName(shopName);
-
-                break;
-
-            } catch (ValidationException exception) {
-
-                System.out.println(exception.getMessage());
-
-            }
-
-        }
-
-        String shopAddress =
-                InputUtil.readString("Enter Shop Address: ");
-
-        Address address = createAddress();
-
-        if (address != null) {
-
-            addressDAO.insertAddress(address);
-
-        }
+        addressDAO.insertAddress(address);
 
         Seller seller = new Seller(
 
@@ -241,8 +218,7 @@ public class AuthenticationService {
 
                 return email;
 
-            } catch (ValidationException |
-                     DuplicateUserException exception) {
+            } catch (ValidationException | DuplicateUserException exception) {
 
                 System.out.println(exception.getMessage()
                         + " Example : abc@domain.com");
@@ -310,6 +286,133 @@ public class AuthenticationService {
             } catch (ValidationException exception) {
 
                 System.out.println(exception.getMessage());
+
+            }
+
+        }
+
+    }
+
+    /**
+     * Reads Valid Shop Name.
+     *
+     * @return Shop Name
+     */
+    private String readValidShopName() {
+
+        while (true) {
+
+            try {
+
+                String shopName =
+                        InputUtil.readString(
+                                "Enter Shop Name: ");
+
+                ValidationUtil.validateShopName(
+                        shopName);
+
+                return shopName;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
+
+            }
+
+        }
+
+    }
+
+    /**
+     * Reads Valid Shop Address.
+     *
+     * @return Shop Address
+     */
+    private String readValidShopAddress() {
+
+        while (true) {
+
+            try {
+
+                String shopAddress =
+                        InputUtil.readString(
+                                "Enter Shop Address: ");
+
+                ValidationUtil.validateShopAddress(
+                        shopAddress);
+
+                return shopAddress;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
+
+            }
+
+        }
+
+    }
+    /**
+     * Creates Seller Address.
+     * Seller is not asked for House Number.
+     *
+     * @return Address
+     */
+    private Address createSellerAddress() {
+
+        while (true) {
+
+            try {
+
+                String street =
+                        InputUtil.readString(
+                                "Enter Street: ");
+
+                String city =
+                        InputUtil.readString(
+                                "Enter City: ");
+
+                String state =
+                        InputUtil.readString(
+                                "Enter State: ");
+
+                String country =
+                        InputUtil.readString(
+                                "Enter Country: ");
+
+                String zipCode =
+                        InputUtil.readString(
+                                "Enter Zip Code: ");
+
+                Address address = new Address(
+
+                        IdGenerator.generateId("ADDR"),
+
+                        "",
+
+                        street,
+
+                        city,
+
+                        state,
+
+                        country,
+
+                        zipCode
+
+                );
+
+                ValidationUtil.validateSellerAddress(
+                        address);
+
+                return address;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
 
             }
 

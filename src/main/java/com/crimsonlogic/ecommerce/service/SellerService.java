@@ -1,8 +1,8 @@
 package com.crimsonlogic.ecommerce.service;
 
 import com.crimsonlogic.ecommerce.dao.SellerDAO;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.UserNotFoundException;
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.UserNotFoundException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Seller;
 import com.crimsonlogic.ecommerce.service.abstraction.UserService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
@@ -28,16 +28,13 @@ public class SellerService extends UserService<Seller> {
         // Update common user details
         super.updateProfile(seller);
 
-        System.out.println(
-                "\n========== UPDATE SHOP DETAILS ==========");
-
         while (true) {
 
             try {
 
                 String shopName =
                         InputUtil.readOptionalString(
-                                "Enter Shop Name (Press Enter to Skip): ");
+                                "Enter Shop Name: ");
 
                 if (shopName != null) {
 
@@ -53,7 +50,7 @@ public class SellerService extends UserService<Seller> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         exception.getMessage());
 
             }

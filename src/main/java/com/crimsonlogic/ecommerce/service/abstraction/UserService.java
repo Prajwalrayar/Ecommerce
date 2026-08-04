@@ -1,6 +1,6 @@
 package com.crimsonlogic.ecommerce.service.abstraction;
 
-import com.crimsonlogic.ecommerce.exceptionhandling.user.ValidationException;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.abstraction.User;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -49,7 +49,7 @@ public abstract class UserService<T extends User> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printMessage(exception.getMessage());
 
             }
 
@@ -70,7 +70,7 @@ public abstract class UserService<T extends User> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printMessage(exception.getMessage());
 
             }
 
@@ -91,7 +91,7 @@ public abstract class UserService<T extends User> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printMessage(exception.getMessage());
 
             }
 
@@ -115,7 +115,7 @@ public abstract class UserService<T extends User> {
 
             if (!user.getUserPassword().equals(currentPassword)) {
 
-                DisplayUtil.printError(
+                DisplayUtil.printMessage(
                         "Current Password is incorrect.");
 
                 continue;
@@ -134,7 +134,7 @@ public abstract class UserService<T extends User> {
 
                 if (!newPassword.equals(confirmPassword)) {
 
-                    DisplayUtil.printError(
+                    DisplayUtil.printMessage(
                             "Passwords do not match.");
 
                     continue;
@@ -150,7 +150,7 @@ public abstract class UserService<T extends User> {
 
             } catch (ValidationException exception) {
 
-                DisplayUtil.printError(exception.getMessage());
+                DisplayUtil.printMessage(exception.getMessage());
 
             }
 
