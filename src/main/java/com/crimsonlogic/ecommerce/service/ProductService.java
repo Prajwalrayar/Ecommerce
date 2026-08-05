@@ -37,6 +37,8 @@ public class ProductService {
      */
     private final ProductDAO productDAO =
             new ProductDAO();
+    private final InventoryService inventoryService =
+            new InventoryService();
 
     /**
      * Product Table Headers.
@@ -77,7 +79,15 @@ public class ProductService {
 
         }
 
-        createProduct(seller);
+        Product product = createProduct(seller);
+
+        if (product == null) {
+
+            return;
+
+        }
+
+        inventoryService.addInitialInventory(product);
 
     }
 
@@ -288,7 +298,7 @@ public class ProductService {
      *
      * @param seller Seller
      */
-    private void createProduct(Seller seller) {
+    private Product createProduct(Seller seller) {
 
         while (true) {
 
@@ -311,7 +321,7 @@ public class ProductService {
                     DisplayUtil.printMessage(
                             "Product Already Exists.");
 
-                    return;
+                    return null;
 
                 }
 
@@ -357,7 +367,8 @@ public class ProductService {
 
                         );
 
-                productDAO.insertProduct(product);
+                productDAO.insertProduct(
+                        product);
 
                 DisplayUtil.printSuccess(
                         "Product Added Successfully.");
@@ -366,7 +377,8 @@ public class ProductService {
                         "Product ID : "
                                 + product.getProductId());
 
-                break;
+
+                return product;
 
             } catch (ValidationException exception) {
 

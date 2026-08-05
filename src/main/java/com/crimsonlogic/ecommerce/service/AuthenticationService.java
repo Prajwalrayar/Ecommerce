@@ -462,7 +462,8 @@ public class AuthenticationService {
 
         String phone = readValidPhone();
 
-        String password = readValidPassword();
+        String password = PasswordUtil.encryptPassword(
+                readValidPassword());
 
         Address address = createAddress();
 
@@ -664,6 +665,7 @@ public class AuthenticationService {
                         "Invalid Email or Password.");
 
             }
+
             if (!PasswordUtil.verifyPassword(
                     password,
                     customer.getUserPassword())) {

@@ -19,11 +19,6 @@ import java.util.List;
  */
 public class InventoryService {
 
-    /**
-     * Product Service.
-     */
-    private final ProductService productService =
-            new ProductService();
 
     /**
      * Inventory DAO.
@@ -93,7 +88,43 @@ public class InventoryService {
 
         }
 
-        productService.viewSellerProducts(seller);
+        DisplayUtil.printTable(
+
+                "MY PRODUCTS",
+
+                new String[]{
+
+                        "Product ID",
+                        "Product Name",
+                        "Category",
+                        "Price (₹)",
+                        "Status"
+
+                },
+
+                productDAO.findProductsBySeller(
+                                seller.getUserId())
+                        .stream()
+                        .map(product -> new String[]{
+
+                                product.getProductId(),
+
+                                product.getProductName(),
+
+                                product.getCategory()
+                                        .getCategoryName(),
+
+                                String.format(
+                                        "%.2f",
+                                        product.getProductPrice()),
+
+                                product.getProductStatus()
+                                        .name()
+
+                        })
+                        .toList()
+
+        );
 
         addStockToProduct(
                 getSellerProductOrNull(seller));
@@ -112,7 +143,46 @@ public class InventoryService {
 
         }
 
-        productService.viewAllProducts();
+        DisplayUtil.printTable(
+
+                "AVAILABLE PRODUCTS",
+
+                new String[]{
+
+                        "Product ID",
+                        "Product Name",
+                        "Category",
+                        "Price (₹)",
+                        "Seller",
+                        "Status"
+
+                },
+
+                productDAO.findAllProducts()
+                        .stream()
+                        .map(product -> new String[]{
+
+                                product.getProductId(),
+
+                                product.getProductName(),
+
+                                product.getCategory()
+                                        .getCategoryName(),
+
+                                String.format(
+                                        "%.2f",
+                                        product.getProductPrice()),
+
+                                product.getSeller()
+                                        .getShopName(),
+
+                                product.getProductStatus()
+                                        .name()
+
+                        })
+                        .toList()
+
+        );
 
         addStockToProduct(
                 getProductOrNull());
@@ -338,6 +408,12 @@ public class InventoryService {
             }
 
         }
+
+    }
+
+    public void addInitialInventory(Product product) {
+
+        createInventory(product);
 
     }
 
