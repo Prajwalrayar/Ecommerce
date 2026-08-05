@@ -214,6 +214,20 @@ public class OrderDAO {
 
     }
 
+    public List<Order> findCancelableOrders(String customerId) {
+
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
+
+            OrderMapper mapper =
+                    session.getMapper(OrderMapper.class);
+
+            return mapper.findCancelableOrders(customerId);
+
+        }
+
+    }
+
 
     // Returns Seller Orders by Product.
     public List<Order> findOrdersBySellerAndProduct(String sellerId,

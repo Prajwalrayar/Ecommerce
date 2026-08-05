@@ -4,6 +4,7 @@ import com.crimsonlogic.ecommerce.dao.*;
 import com.crimsonlogic.ecommerce.enums.OrderStatus;
 import com.crimsonlogic.ecommerce.enums.PaymentMethod;
 import com.crimsonlogic.ecommerce.enums.PaymentStatus;
+import com.crimsonlogic.ecommerce.enums.ProductStatus;
 import com.crimsonlogic.ecommerce.model.*;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
@@ -41,11 +42,13 @@ public class OrderService {
 
     private final InventoryDAO inventoryDAO;
 
+
     /**
      * Payment DAO.
      */
     private final PaymentDAO paymentDAO;
 
+    private final CustomerDAO customerDAO = new CustomerDAO();
     private final ProductDAO productDAO = new ProductDAO();
 
     // Customer Order Table Headers.
@@ -184,13 +187,18 @@ public class OrderService {
 
         }
 
-        viewOrders(customer);
+        viewCancelableOrders(customer);
 
-        cancelExistingOrder(
+        Order order =
+                getCustomerOrderOrNull(customer);
 
-                getCustomerOrderOrNull(customer)
+        if (order == null) {
 
-        );
+            return;
+
+        }
+
+        cancelExistingOrder(order);
 
     }
 
@@ -244,18 +252,28 @@ public class OrderService {
 
                         cart.getTotalPrice(),
 
-                        OrderStatus.PLACED,
+                        OrderStatus.PENDING_APPROVAL,
 
                         LocalDateTime.now()
 
                 );
 
-        orderDAO.insertOrder(
-                order);
+        orderDAO.insertOrder(order);
 
-        updateInventory(
-                inventory,
-                -cart.getQuantity());
+        Payment payment =
+                createPayment(order);
+
+        if (payment == null) {
+
+            orderDAO.deleteOrder(
+                    order.getOrderId());
+
+            DisplayUtil.printMessage(
+                    "Payment Cancelled.");
+
+            return;
+
+        }
 
         cartDAO.deleteCartItem(
                 cart.getCartId());
@@ -267,8 +285,201 @@ public class OrderService {
                 "Tracking Number : "
                         + order.getOrderId());
 
+        if (payment.getPaymentMethod()
+                == PaymentMethod.CASH_ON_DELIVERY) {
+
+            DisplayUtil.printMessage(
+                    "Order Waiting For Seller/Admin Approval.");
+
+        } else {
+
+            DisplayUtil.printSuccess(
+                    "Payment Successful.");
+
+            DisplayUtil.printMessage(
+                    "Order Waiting For Seller/Admin Approval.");
+
+        }
+
     }
 
+    /**
+     * Creates Payment.
+     *
+     * @param order Order
+     * @return Payment
+     */
+    private Payment createPayment(Order order) {
+
+        Customer customer =
+                order.getCustomer();
+
+        PaymentMethod paymentMethod =
+                choosePaymentMethod();
+
+        if (paymentMethod == null) {
+
+            return null;
+
+        }
+
+        double amount =
+                order.getTotalPrice();
+
+        PaymentStatus paymentStatus;
+
+        String transactionId =
+                IdGenerator.generateId("TXN");
+
+        String upi = null;
+
+        //----------------------------------------------------
+        // WALLET
+        //----------------------------------------------------
+
+        if (paymentMethod == PaymentMethod.WALLET) {
+
+            if (customer.getWalletBalance() >= amount) {
+
+                customer.setWalletBalance(
+
+                        customer.getWalletBalance()
+                                - amount
+
+                );
+
+                customerDAO.updateWalletBalance(customer);
+
+                paymentStatus =
+                        PaymentStatus.SUCCESS;
+
+                DisplayUtil.printSuccess(
+                        "Wallet Payment Successful.");
+
+            }
+
+            else {
+
+                double remaining =
+                        amount -
+                                customer.getWalletBalance();
+
+                System.out.println();
+
+                DisplayUtil.printMessage(
+                        "Insufficient Wallet Balance.");
+
+                System.out.println(
+                        "Wallet Balance : ₹"
+                                + customer.getWalletBalance());
+
+                System.out.println(
+                        "Required : ₹"
+                                + amount);
+
+                System.out.println(
+                        "Short Amount : ₹"
+                                + remaining);
+
+                System.out.println();
+                System.out.println("1. Add Money To Wallet");
+                System.out.println("2. Choose Another Payment");
+                System.out.println("3. Cancel");
+
+                int option =
+                        InputUtil.readInt(
+                                "Enter Choice : ");
+
+                switch (option) {
+
+                    case 1:
+
+                        rechargeWallet(
+                                customer,
+                                remaining);
+
+                        return createPayment(order);
+
+                    case 2:
+
+                        return createPayment(order);
+
+                    default:
+
+                        return null;
+
+                }
+
+            }
+
+        }
+
+        //----------------------------------------------------
+        // COD
+        //----------------------------------------------------
+
+        else if (paymentMethod
+                == PaymentMethod.CASH_ON_DELIVERY) {
+
+            paymentStatus =
+                    PaymentStatus.PENDING;
+
+        }
+
+        //----------------------------------------------------
+        // UPI / CARD / NET BANKING
+        //----------------------------------------------------
+
+        else {
+
+            if (paymentMethod
+                    == PaymentMethod.UPI) {
+
+                upi =
+                        InputUtil.readString(
+                                "Enter UPI ID : ");
+
+            }
+
+            transactionId =
+                    IdGenerator.generateId("TXN");
+
+            paymentStatus =
+                    PaymentStatus.SUCCESS;
+
+            DisplayUtil.printSuccess(
+                    "Payment Successful.");
+
+        }
+
+        Payment payment =
+                new Payment(
+
+                        IdGenerator.generateId("PAY"),
+
+                        transactionId,
+
+                        customer,
+
+                        order,
+
+                        paymentMethod,
+
+                        paymentStatus,
+
+                        amount,
+
+                        upi,
+
+                        LocalDateTime.now()
+
+                );
+
+        paymentDAO.insertPayment(payment);
+
+        return payment;
+
+    }
     /**
      * Cancels Existing Order.
      *
@@ -276,9 +487,42 @@ public class OrderService {
      */
     private void cancelExistingOrder(Order order) {
 
-        if (!validateCancellation(order)) {
+        if (order == null) {
 
             return;
+
+        }
+
+        if (order.getOrderStatus()
+                == OrderStatus.DELIVERED) {
+
+            DisplayUtil.printMessage(
+                    "Delivered Order Cannot Be Cancelled.");
+
+            return;
+
+        }
+
+        if (order.getOrderStatus()
+                == OrderStatus.CANCELLED) {
+
+            DisplayUtil.printMessage(
+                    "Order Already Cancelled.");
+
+            return;
+
+        }
+
+        if (order.getOrderStatus()
+                == OrderStatus.CONFIRMED) {
+
+            Inventory inventory =
+                    inventoryService.findInventoryByProduct(
+                            order.getProduct());
+
+            updateInventory(
+                    inventory,
+                    order.getQuantity());
 
         }
 
@@ -288,15 +532,19 @@ public class OrderService {
         orderDAO.updateOrderStatus(
                 order);
 
-        Inventory inventory =
-                inventoryService.findInventoryByProduct(
-                        order.getProduct());
+        Payment payment =
+                getPaymentByOrder(order);
 
-        if (inventory != null) {
+        if (payment != null
+                &&
+                payment.getPaymentStatus()
+                        == PaymentStatus.SUCCESS) {
 
-            updateInventory(
-                    inventory,
-                    order.getQuantity());
+            payment.setPaymentStatus(
+                    PaymentStatus.REFUNDED);
+
+            paymentDAO.updatePaymentStatus(
+                    payment);
 
         }
 
@@ -379,9 +627,8 @@ public class OrderService {
         return true;
 
     }
-
     /**
-     * Updates Inventory Quantity.
+     * Updates Inventory.
      *
      * @param inventory Inventory
      * @param quantity Quantity
@@ -389,14 +636,34 @@ public class OrderService {
     private void updateInventory(Inventory inventory, int quantity) {
 
         inventory.setQuantity(
+                inventory.getQuantity() + quantity);
 
-                inventory.getQuantity()
-                        + quantity
+        if (inventory.getQuantity() < 0) {
 
-        );
+            inventory.setQuantity(0);
 
-        inventoryDAO.updateInventory(
+        }
+
+        inventoryDAO.updateQuantity(
                 inventory);
+
+        Product product =
+                inventory.getProduct();
+
+        if (inventory.getQuantity() == 0) {
+
+            product.setProductStatus(
+                    ProductStatus.OUT_OF_STOCK);
+
+        } else {
+
+            product.setProductStatus(
+                    ProductStatus.AVAILABLE);
+
+        }
+
+        productDAO.updateProductStatus(
+                product);
 
     }
 
@@ -418,15 +685,13 @@ public class OrderService {
 
             case DELIVERED:
 
-                DisplayUtil.printMessage(
-                        "Order Cannot Be Cancelled.");
+                DisplayUtil.printMessage("Order Cannot Be Cancelled.");
 
                 return false;
 
             case CANCELLED:
 
-                DisplayUtil.printMessage(
-                        "Order Already Cancelled.");
+                DisplayUtil.printMessage("Order Already Cancelled.");
 
                 return false;
 
@@ -490,8 +755,7 @@ public class OrderService {
      * @param orders Order List
      * @param title Table Title
      */
-    private void displayCustomerOrders(
-            List<Order> orders,
+    private void displayCustomerOrders(List<Order> orders,
             String title) {
 
         if (orders.isEmpty()) {
@@ -522,8 +786,7 @@ public class OrderService {
      * @param title Table Title
      */
     private void displaySellerOrders(
-            List<Order> orders,
-            String title) {
+            List<Order> orders, String title) {
 
         if (orders.isEmpty()) {
 
@@ -553,8 +816,7 @@ public class OrderService {
      * @param title Table Title
      */
     private void displayAdminOrders(
-            List<Order> orders,
-            String title) {
+            List<Order> orders, String title) {
 
         if (orders.isEmpty()) {
 
@@ -582,8 +844,7 @@ public class OrderService {
      *
      * @param order Order
      */
-    private void trackOrderDetails(
-            Order order) {
+    private void trackOrderDetails(Order order) {
 
         if (order == null) {
 
@@ -724,6 +985,16 @@ public class OrderService {
 
     }
 
+    private void viewCancelableOrders(Customer customer) {
+
+        List<Order> orders =
+                orderDAO.findCancelableOrders(
+                        customer.getUserId());
+
+        displayCustomerOrders(orders,"MY ORDERS");
+
+    }
+
     /**
      * Confirms Order.
      */
@@ -825,18 +1096,16 @@ public class OrderService {
         return true;
 
     }
-    /**
-     * Confirms Existing Order.
-     *
-     * @param order Order
-     */
+
+    //Confirms Existing Order.
+
     private void confirmExistingOrder(Order order) {
 
         if (order.getOrderStatus()
-                != OrderStatus.PLACED) {
+                != OrderStatus.PENDING_APPROVAL) {
 
             DisplayUtil.printMessage(
-                    "Only Placed Orders Can Be Confirmed.");
+                    "Only Pending Approval Orders Can Be Confirmed.");
 
             return;
 
@@ -848,19 +1117,19 @@ public class OrderService {
         if (payment == null) {
 
             DisplayUtil.printMessage(
-                    "Payment Pending.");
+                    "Payment Record Not Found.");
 
             return;
 
         }
 
-        if (payment.getPaymentStatus()
-                != PaymentStatus.SUCCESS
+        if (payment.getPaymentMethod()
+                != PaymentMethod.CASH_ON_DELIVERY
 
                 &&
 
-                payment.getPaymentMethod()
-                        != PaymentMethod.CASH_ON_DELIVERY) {
+                payment.getPaymentStatus()
+                        != PaymentStatus.SUCCESS) {
 
             DisplayUtil.printMessage(
                     "Payment Not Completed.");
@@ -869,9 +1138,21 @@ public class OrderService {
 
         }
 
-        order.setOrderStatus(OrderStatus.CONFIRMED);
+        order.setOrderStatus(
+                OrderStatus.CONFIRMED);
+
         orderDAO.updateOrderStatus(order);
-        DisplayUtil.printSuccess("Order Confirmed Successfully.");
+
+        Inventory inventory =
+                inventoryService.findInventoryByProduct(
+                        order.getProduct());
+
+        updateInventory(
+                inventory,
+                -order.getQuantity());
+
+        DisplayUtil.printSuccess(
+                "Order Confirmed Successfully.");
 
     }
 
@@ -944,8 +1225,7 @@ public class OrderService {
     }
 
     // Returns Customer Cart.
-    private Cart getCustomerCartOrNull(
-            Customer customer) {
+    private Cart getCustomerCartOrNull(Customer customer) {
 
         String productName =
                 InputUtil.readString(
@@ -987,8 +1267,7 @@ public class OrderService {
      * @param customer Logged-in Customer
      * @return Order
      */
-    private Order getCustomerOrderOrNull(
-            Customer customer) {
+    private Order getCustomerOrderOrNull(Customer customer) {
 
         String trackingNumber =
                 InputUtil.readString(
@@ -1016,8 +1295,7 @@ public class OrderService {
     }
 
     // Returns Seller Order.
-    private Order getSellerOrderOrNull(
-            Seller seller) {
+    private Order getSellerOrderOrNull(Seller seller) {
 
         String trackingNumber =
                 InputUtil.readString(
@@ -1199,6 +1477,69 @@ public class OrderService {
 
     }
 
+    private void rechargeWallet(
+
+            Customer customer,
+
+            double requiredAmount) {
+
+        System.out.println();
+
+        System.out.println("Recharge Wallet");
+
+        System.out.println("1. UPI");
+        System.out.println("2. DEBIT CARD");
+        System.out.println("3. NET BANKING");
+
+        int choice =
+                InputUtil.readInt(
+                        "Choose Method : ");
+
+        if (choice < 1 || choice > 3) {
+
+            DisplayUtil.printInvalidChoice();
+
+            return;
+
+        }
+
+        double recharge =
+                InputUtil.readDouble(
+                        "Enter Amount : ");
+
+        while (recharge < requiredAmount) {
+
+            DisplayUtil.printMessage(
+
+                    "Minimum Recharge Amount : ₹"
+
+                            + requiredAmount
+
+            );
+
+            recharge =
+                    InputUtil.readDouble(
+                            "Enter Amount : ");
+
+        }
+
+        customer.setWalletBalance(
+
+                customer.getWalletBalance()
+                        + recharge
+
+        );
+
+        customerDAO.updateWalletBalance(customer);
+
+        DisplayUtil.printSuccess(
+
+                "Wallet Recharged Successfully."
+
+        );
+
+    }
+
     // Builds Customer Order Table Rows.
     private List<String[]> buildCustomerOrderRows(
             List<Order> orders) {
@@ -1296,6 +1637,55 @@ public class OrderService {
                 })
 
                 .toList();
+
+    }
+
+
+    /**
+     * Chooses Payment Method.
+     *
+     * @return Payment Method
+     */
+    private PaymentMethod choosePaymentMethod() {
+
+        while (true) {
+
+            System.out.println("\n==========================================");
+            System.out.println("             PAYMENT MENU");
+            System.out.println("==========================================");
+            System.out.println("1. WALLET");
+            System.out.println("2. UPI");
+            System.out.println("3. DEBIT CARD");
+            System.out.println("4. NET BANKING");
+            System.out.println("5. CASH ON DELIVERY");
+            System.out.println("==========================================");
+
+            int choice =
+                    InputUtil.readInt("Enter Choice : ");
+
+            switch (choice) {
+
+                case 1:
+                    return PaymentMethod.WALLET;
+
+                case 2:
+                    return PaymentMethod.UPI;
+
+                case 3:
+                    return PaymentMethod.DEBIT_CARD;
+
+                case 4:
+                    return PaymentMethod.NET_BANKING;
+
+                case 5:
+                    return PaymentMethod.CASH_ON_DELIVERY;
+
+                default:
+                    DisplayUtil.printInvalidChoice();
+
+            }
+
+        }
 
     }
 

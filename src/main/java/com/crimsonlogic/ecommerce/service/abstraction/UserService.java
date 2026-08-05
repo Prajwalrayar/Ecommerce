@@ -4,6 +4,7 @@ import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.abstraction.User;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
+import com.crimsonlogic.ecommerce.util.PasswordUtil;
 import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
 /**
@@ -113,7 +114,8 @@ public abstract class UserService<T extends User> {
             String currentPassword =
                     InputUtil.readString("Enter Current Password : ");
 
-            if (!user.getUserPassword().equals(currentPassword)) {
+            if (!PasswordUtil.verifyPassword(
+                    currentPassword, user.getUserPassword())) {
 
                 DisplayUtil.printMessage(
                         "Current Password is incorrect.");
@@ -141,7 +143,8 @@ public abstract class UserService<T extends User> {
 
                 }
 
-                user.setUserPassword(newPassword);
+                user.setUserPassword(PasswordUtil.encryptPassword(
+                                newPassword));
 
                 DisplayUtil.printSuccess(
                         "Password Changed Successfully.");

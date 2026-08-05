@@ -46,6 +46,10 @@ public class Order {
      */
     private LocalDateTime orderDate;
 
+    public Order() {
+
+    }
+
     /**
      * Parameterized Constructor.
      *
@@ -57,6 +61,8 @@ public class Order {
      * @param orderStatus Order Status
      * @param orderDate Order Date
      */
+
+
     public Order(
             String orderId,
             Customer customer,

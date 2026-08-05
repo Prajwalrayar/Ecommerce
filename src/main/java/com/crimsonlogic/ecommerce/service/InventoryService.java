@@ -19,11 +19,6 @@ import java.util.List;
  */
 public class InventoryService {
 
-    /**
-     * Product Service.
-     */
-    private final ProductService productService =
-            new ProductService();
 
     /**
      * Inventory DAO.
@@ -93,7 +88,43 @@ public class InventoryService {
 
         }
 
-        productService.viewSellerProducts(seller);
+        DisplayUtil.printTable(
+
+                "MY PRODUCTS",
+
+                new String[]{
+
+                        "Product ID",
+                        "Product Name",
+                        "Category",
+                        "Price (₹)",
+                        "Status"
+
+                },
+
+                productDAO.findProductsBySeller(
+                                seller.getUserId())
+                        .stream()
+                        .map(product -> new String[]{
+
+                                product.getProductId(),
+
+                                product.getProductName(),
+
+                                product.getCategory()
+                                        .getCategoryName(),
+
+                                String.format(
+                                        "%.2f",
+                                        product.getProductPrice()),
+
+                                product.getProductStatus()
+                                        .name()
+
+                        })
+                        .toList()
+
+        );
 
         addStockToProduct(
                 getSellerProductOrNull(seller));
@@ -112,7 +143,46 @@ public class InventoryService {
 
         }
 
-        productService.viewAllProducts();
+        DisplayUtil.printTable(
+
+                "AVAILABLE PRODUCTS",
+
+                new String[]{
+
+                        "Product ID",
+                        "Product Name",
+                        "Category",
+                        "Price (₹)",
+                        "Seller",
+                        "Status"
+
+                },
+
+                productDAO.findAllProducts()
+                        .stream()
+                        .map(product -> new String[]{
+
+                                product.getProductId(),
+
+                                product.getProductName(),
+
+                                product.getCategory()
+                                        .getCategoryName(),
+
+                                String.format(
+                                        "%.2f",
+                                        product.getProductPrice()),
+
+                                product.getSeller()
+                                        .getShopName(),
+
+                                product.getProductStatus()
+                                        .name()
+
+                        })
+                        .toList()
+
+        );
 
         addStockToProduct(
                 getProductOrNull());
@@ -338,6 +408,12 @@ public class InventoryService {
             }
 
         }
+
+    }
+
+    public void addInitialInventory(Product product) {
+
+        createInventory(product);
 
     }
 
@@ -575,12 +651,52 @@ public class InventoryService {
             Product product) {
 
         if (product == null) {
-
             return;
-
         }
 
-        createInventory(product);
+        Inventory inventory =
+                inventoryDAO.findInventoryByProduct(
+                        product.getProductId());
+
+        if (inventory == null) {
+
+            createInventory(product);
+
+            return;
+        }
+
+        while (true) {
+
+            try {
+
+                int quantity =
+                        InputUtil.readInt(
+                                "Enter Quantity To Add : ");
+
+                ValidationUtil.validateQuantity(quantity);
+
+                inventory.setQuantity(
+                        inventory.getQuantity() + quantity);
+
+                inventoryDAO.updateQuantity(
+                        inventory);
+
+                updateProductStatus(
+                        inventory);
+
+                DisplayUtil.printSuccess(
+                        "Stock Added Successfully.");
+
+                break;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
+
+            }
+
+        }
 
     }
 
@@ -806,8 +922,13 @@ public class InventoryService {
 
         }
 
-        productDAO.updateProductStatus(
-                product);
+        System.out.println("================================");
+        System.out.println("Product ID : " + product.getProductId());
+        System.out.println("Quantity   : " + inventory.getQuantity());
+        System.out.println("Status     : " + product.getProductStatus());
+        System.out.println("================================");
+
+        productDAO.updateProductStatus(product);
 
     }
 

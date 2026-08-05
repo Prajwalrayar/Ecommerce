@@ -414,6 +414,33 @@
 
     </select>
 
+    <select id="findCancelableOrders"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_name,
+
+        p.product_name
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id = c.user_id
+
+        INNER JOIN products p
+        ON o.product_id = p.product_id
+
+        WHERE o.user_id = #{customerId}
+
+        AND o.order_status != 'CANCELLED'
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
     <select id="findOrdersBySellerAndProduct"
             resultMap="OrderResultMap">
 

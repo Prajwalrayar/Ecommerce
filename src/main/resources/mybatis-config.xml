@@ -48,6 +48,8 @@
 
         <mapper resource="mapper/PaymentMapper.xml"/>
 
+        <mapper resource="mapper/AddressMapper.xml"/>
+
     </mappers>
 
 </configuration>
