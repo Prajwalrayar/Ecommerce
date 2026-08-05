@@ -5,10 +5,12 @@ import com.crimsonlogic.ecommerce.enums.OrderStatus;
 import com.crimsonlogic.ecommerce.enums.PaymentMethod;
 import com.crimsonlogic.ecommerce.enums.PaymentStatus;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.*;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
+import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -1269,28 +1271,28 @@ public class OrderService {
      */
     private Order getCustomerOrderOrNull(Customer customer) {
 
-        String trackingNumber =
-                InputUtil.readString(
-                                "Enter Tracking Number : ")
-                        .trim();
+        try {
 
-        Order order =
-                orderDAO.findOrderByIdAndCustomer(
+            String trackingNumber = InputUtil.readString("Enter Tracking Number : ");
 
-                        trackingNumber,
+            ValidationUtil.validateTrackingNumber(trackingNumber);
 
-                        customer.getUserId()
+            Order order = orderDAO.findOrderByIdAndCustomer(
+                            trackingNumber, customer.getUserId());
 
-                );
+            if (order == null) {
+                DisplayUtil.printMessage("Order Not Found.");
+            }
 
-        if (order == null) {
+            return order;
 
-            DisplayUtil.printMessage(
-                    "Order Not Found.");
+        } catch (ValidationException exception) {
+
+            DisplayUtil.printMessage(exception.getMessage());
+
+            return null;
 
         }
-
-        return order;
 
     }
 

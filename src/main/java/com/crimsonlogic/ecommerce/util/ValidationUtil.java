@@ -46,8 +46,7 @@ public class ValidationUtil {
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[1-9][0-9]{5}$");
 
     // User Name Validation
-    public static void validateUserName(
-            String name)
+    public static void validateUserName(String name)
             throws ValidationException {
 
         validateField(name, "Name");
@@ -220,12 +219,8 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Seller Address.
-     *
-     * @param address Seller Address
-     * @throws ValidationException if address is invalid
-     */
+    // Validates Seller Address.
+
     public static void validateSellerAddress(Address address)
             throws ValidationException {
 
@@ -257,12 +252,8 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Category Description.
-     *
-     * @param description Category Description
-     * @throws ValidationException if Description is invalid
-     */
+    // Validates Category Description.
+
     public static void validateCategoryDescription(String description)
             throws ValidationException {
 
@@ -282,12 +273,8 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Product Name.
-     *
-     * @param productName Product Name
-     * @throws ValidationException if Product Name is invalid
-     */
+    // Validates Product Name.
+
     public static void validateProductName(String productName)
             throws ValidationException {
 
@@ -308,14 +295,9 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Product Description.
-     *
-     * @param description Product Description
-     * @throws ValidationException if Description is invalid
-     */
-    public static void validateProductDescription(
-            String description)
+    // Validates Product Description.
+
+    public static void validateProductDescription(String description)
             throws ValidationException {
 
         if (description == null
@@ -375,8 +357,7 @@ public class ValidationUtil {
      * Checks if a string contains more than
      * two consecutive identical characters.
      */
-    private static boolean hasRepeatedCharacters(
-            String value) {
+    private static boolean hasRepeatedCharacters(String value) {
 
         int count = 1;
 
@@ -439,6 +420,33 @@ public class ValidationUtil {
         return false;
 
     }
+
+    /**
+     * Validates Tracking Number.
+     *
+     * @param trackingNumber Tracking Number
+     */
+    public static void validateTrackingNumber(
+            String trackingNumber) throws ValidationException {
+
+        if (trackingNumber == null
+                || trackingNumber.isBlank()) {
+
+            throw new ValidationException(
+                    "Tracking Number Cannot Be Empty.");
+
+        }
+
+        if (!trackingNumber.matches("^TRK\\d{4}$")) {
+
+            throw new ValidationException(
+                    "Invalid Tracking Number. Format: TRK1234");
+
+        }
+
+    }
+
+
     // Helper Method
     /**
      * Checks whether a string contains
