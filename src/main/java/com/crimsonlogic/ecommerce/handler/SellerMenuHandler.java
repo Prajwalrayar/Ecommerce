@@ -98,6 +98,7 @@ public class SellerMenuHandler {
 
                     break;
 
+
                 case "logout":
 
                     authenticationService.logout();

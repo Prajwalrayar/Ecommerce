@@ -5,7 +5,7 @@ package com.crimsonlogic.ecommerce.enums;
  */
 public enum OrderStatus {
 
-    PLACED,
+    PENDING_APPROVAL,
 
     CONFIRMED,
 
@@ -17,6 +17,8 @@ public enum OrderStatus {
 
     DELIVERED,
 
-    CANCELLED
+    CANCELLED,
+
+    REJECTED
 
 }

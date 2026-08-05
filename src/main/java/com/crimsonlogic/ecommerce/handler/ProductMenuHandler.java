@@ -1,6 +1,7 @@
 package com.crimsonlogic.ecommerce.handler;
 
 import com.crimsonlogic.ecommerce.model.Seller;
+import com.crimsonlogic.ecommerce.service.InventoryService;
 import com.crimsonlogic.ecommerce.service.ProductService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
@@ -11,6 +12,7 @@ import com.crimsonlogic.ecommerce.util.InputUtil;
 public class ProductMenuHandler {
 
     private final ProductService productService;
+    private final InventoryService inventoryService;
 
     /**
      * Parameterized Constructor.
@@ -20,6 +22,7 @@ public class ProductMenuHandler {
     public ProductMenuHandler(ProductService productService) {
 
         this.productService = productService;
+        this.inventoryService = new InventoryService();
 
     }
 
@@ -67,6 +70,10 @@ public class ProductMenuHandler {
                     productService.deleteProduct(seller);
                     break;
 
+                case "add stock" :
+
+                    inventoryService.addStock(seller);
+
                 case "back":
 
                     back = true;
@@ -113,6 +120,11 @@ public class ProductMenuHandler {
 
                     productService.deleteProductByAdmin();
                     break;
+                case "add stock":
+
+                    inventoryService.addStock();
+
+                    break;
 
                 case "back":
 
@@ -142,6 +154,7 @@ public class ProductMenuHandler {
         System.out.println("SEARCH");
         System.out.println("UPDATE");
         System.out.println("DELETE");
+        System.out.println("ADD STOCK");
         System.out.println("BACK");
         System.out.println("==========================================");
 
@@ -158,6 +171,7 @@ public class ProductMenuHandler {
         System.out.println("VIEW");
         System.out.println("SEARCH");
         System.out.println("DELETE");
+        System.out.println("ADD STOCK");
         System.out.println("BACK");
         System.out.println("==========================================");
 

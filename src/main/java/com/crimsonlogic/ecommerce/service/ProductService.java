@@ -1,10 +1,12 @@
 package com.crimsonlogic.ecommerce.service;
 
 import com.crimsonlogic.ecommerce.dao.CategoryDAO;
+import com.crimsonlogic.ecommerce.dao.InventoryDAO;
 import com.crimsonlogic.ecommerce.dao.ProductDAO;
 import com.crimsonlogic.ecommerce.enums.ProductStatus;
 import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Category;
+import com.crimsonlogic.ecommerce.model.Inventory;
 import com.crimsonlogic.ecommerce.model.Product;
 import com.crimsonlogic.ecommerce.model.Seller;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
@@ -37,6 +39,9 @@ public class ProductService {
      */
     private final ProductDAO productDAO =
             new ProductDAO();
+
+    private final InventoryDAO inventoryDAO =
+            new InventoryDAO();
     private final InventoryService inventoryService =
             new InventoryService();
 
@@ -52,6 +57,8 @@ public class ProductService {
             "Category",
 
             "Price (₹)",
+
+            "Stock",
 
             "Seller",
 
@@ -433,24 +440,39 @@ public class ProductService {
 
         return products.stream()
 
-                .map(product -> new String[]{
+                .map(product -> {
 
-                        product.getProductId(),
+                    Inventory inventory =
+                            inventoryDAO.findInventoryByProduct(
+                                    product.getProductId());
 
-                        product.getProductName(),
+                    String stock = inventory == null
+                            ? "0"
+                            : String.valueOf(
+                            inventory.getQuantity());
 
-                        product.getCategory()
-                                .getCategoryName(),
+                    return new String[]{
 
-                        String.format(
-                                "%.2f",
-                                product.getProductPrice()),
+                            product.getProductId(),
 
-                        product.getSeller()
-                                .getShopName(),
+                            product.getProductName(),
 
-                        product.getProductStatus()
-                                .name()
+                            product.getCategory()
+                                    .getCategoryName(),
+
+                            String.format(
+                                    "%.2f",
+                                    product.getProductPrice()),
+
+                            stock,
+
+                            product.getSeller()
+                                    .getShopName(),
+
+                            product.getProductStatus()
+                                    .name()
+
+                    };
 
                 })
 

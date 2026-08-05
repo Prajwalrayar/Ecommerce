@@ -651,12 +651,52 @@ public class InventoryService {
             Product product) {
 
         if (product == null) {
-
             return;
-
         }
 
-        createInventory(product);
+        Inventory inventory =
+                inventoryDAO.findInventoryByProduct(
+                        product.getProductId());
+
+        if (inventory == null) {
+
+            createInventory(product);
+
+            return;
+        }
+
+        while (true) {
+
+            try {
+
+                int quantity =
+                        InputUtil.readInt(
+                                "Enter Quantity To Add : ");
+
+                ValidationUtil.validateQuantity(quantity);
+
+                inventory.setQuantity(
+                        inventory.getQuantity() + quantity);
+
+                inventoryDAO.updateQuantity(
+                        inventory);
+
+                updateProductStatus(
+                        inventory);
+
+                DisplayUtil.printSuccess(
+                        "Stock Added Successfully.");
+
+                break;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
+
+            }
+
+        }
 
     }
 
@@ -882,8 +922,13 @@ public class InventoryService {
 
         }
 
-        productDAO.updateProductStatus(
-                product);
+        System.out.println("================================");
+        System.out.println("Product ID : " + product.getProductId());
+        System.out.println("Quantity   : " + inventory.getQuantity());
+        System.out.println("Status     : " + product.getProductStatus());
+        System.out.println("================================");
+
+        productDAO.updateProductStatus(product);
 
     }
 
