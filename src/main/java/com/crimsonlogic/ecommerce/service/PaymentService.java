@@ -80,15 +80,6 @@ public class PaymentService {
 
                 break;
 
-            case "credit card":
-
-                cardPayment(
-                        customer,
-                        order,
-                        PaymentMethod.CREDIT_CARD);
-
-                break;
-
             case "debit card":
 
                 cardPayment(
@@ -466,14 +457,14 @@ public class PaymentService {
 
         }
 
-        String utrNumber =
+        String transactionId =
                 InputUtil.readString(
                                 "Enter UTR Number : ")
                         .trim();
 
         Payment payment =
                 paymentDAO.findPaymentByUtr(
-                        utrNumber);
+                        transactionId);
 
         if (payment == null) {
 
@@ -732,7 +723,7 @@ public class PaymentService {
 
                 .map(payment -> new String[]{
 
-                        payment.getUtrNumber(),
+                        payment.getTransactionId(),
 
                         payment.getCustomer()
                                 .getUserName(),
@@ -859,7 +850,7 @@ public class PaymentService {
 
                 .map(payment -> new String[]{
 
-                        payment.getUtrNumber(),
+                        payment.getTransactionId(),
 
                         payment.getOrder()
                                 .getProduct()
@@ -894,7 +885,7 @@ public class PaymentService {
 
                 .map(payment -> new String[]{
 
-                        payment.getUtrNumber(),
+                        payment.getTransactionId(),
 
                         payment.getCustomer()
                                 .getUserName(),
@@ -1084,7 +1075,6 @@ public class PaymentService {
         System.out.println("==========================================");
         System.out.println("WALLET");
         System.out.println("UPI");
-        System.out.println("CREDIT CARD");
         System.out.println("DEBIT CARD");
         System.out.println("NET BANKING");
         System.out.println("CASH ON DELIVERY");

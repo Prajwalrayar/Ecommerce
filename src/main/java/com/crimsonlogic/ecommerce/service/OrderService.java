@@ -187,13 +187,18 @@ public class OrderService {
 
         }
 
-        viewOrders(customer);
+        viewCancelableOrders(customer);
 
-        cancelExistingOrder(
+        Order order =
+                getCustomerOrderOrNull(customer);
 
-                getCustomerOrderOrNull(customer)
+        if (order == null) {
 
-        );
+            return;
+
+        }
+
+        cancelExistingOrder(order);
 
     }
 
@@ -215,11 +220,6 @@ public class OrderService {
 
     }
 
-    /**
-     * Creates Order.
-     *
-     * @param cart Customer Cart
-     */
     /**
      * Creates Order.
      *
@@ -328,7 +328,8 @@ public class OrderService {
 
         PaymentStatus paymentStatus;
 
-        String utr = null;
+        String transactionId =
+                IdGenerator.generateId("TXN");
 
         String upi = null;
 
@@ -440,8 +441,8 @@ public class OrderService {
 
             }
 
-            utr =
-                    IdGenerator.generateId("UTR");
+            transactionId =
+                    IdGenerator.generateId("TXN");
 
             paymentStatus =
                     PaymentStatus.SUCCESS;
@@ -456,7 +457,7 @@ public class OrderService {
 
                         IdGenerator.generateId("PAY"),
 
-                        utr,
+                        transactionId,
 
                         customer,
 
@@ -485,6 +486,12 @@ public class OrderService {
      * @param order Order
      */
     private void cancelExistingOrder(Order order) {
+
+        if (order == null) {
+
+            return;
+
+        }
 
         if (order.getOrderStatus()
                 == OrderStatus.DELIVERED) {
@@ -626,9 +633,7 @@ public class OrderService {
      * @param inventory Inventory
      * @param quantity Quantity
      */
-    private void updateInventory(
-            Inventory inventory,
-            int quantity) {
+    private void updateInventory(Inventory inventory, int quantity) {
 
         inventory.setQuantity(
                 inventory.getQuantity() + quantity);
@@ -680,15 +685,13 @@ public class OrderService {
 
             case DELIVERED:
 
-                DisplayUtil.printMessage(
-                        "Order Cannot Be Cancelled.");
+                DisplayUtil.printMessage("Order Cannot Be Cancelled.");
 
                 return false;
 
             case CANCELLED:
 
-                DisplayUtil.printMessage(
-                        "Order Already Cancelled.");
+                DisplayUtil.printMessage("Order Already Cancelled.");
 
                 return false;
 
@@ -752,8 +755,7 @@ public class OrderService {
      * @param orders Order List
      * @param title Table Title
      */
-    private void displayCustomerOrders(
-            List<Order> orders,
+    private void displayCustomerOrders(List<Order> orders,
             String title) {
 
         if (orders.isEmpty()) {
@@ -784,8 +786,7 @@ public class OrderService {
      * @param title Table Title
      */
     private void displaySellerOrders(
-            List<Order> orders,
-            String title) {
+            List<Order> orders, String title) {
 
         if (orders.isEmpty()) {
 
@@ -815,8 +816,7 @@ public class OrderService {
      * @param title Table Title
      */
     private void displayAdminOrders(
-            List<Order> orders,
-            String title) {
+            List<Order> orders, String title) {
 
         if (orders.isEmpty()) {
 
@@ -844,8 +844,7 @@ public class OrderService {
      *
      * @param order Order
      */
-    private void trackOrderDetails(
-            Order order) {
+    private void trackOrderDetails(Order order) {
 
         if (order == null) {
 
@@ -983,6 +982,16 @@ public class OrderService {
                 getOrderOrNull()
 
         );
+
+    }
+
+    private void viewCancelableOrders(Customer customer) {
+
+        List<Order> orders =
+                orderDAO.findCancelableOrders(
+                        customer.getUserId());
+
+        displayCustomerOrders(orders,"MY ORDERS");
 
     }
 

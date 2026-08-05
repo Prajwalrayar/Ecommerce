@@ -106,16 +106,16 @@ public class PaymentDAO {
     /**
      * Finds Payment by UTR Number.
      *
-     * @param utrNumber UTR Number
+     * @param transactionId UTR Number
      * @return Payment
      */
-    public Payment findPaymentByUtr(String utrNumber) {
+    public Payment findPaymentByUtr(String transactionId) {
 
         try (SqlSession session = MyBatisUtil.getFactory().openSession()) {
 
             PaymentMapper mapper = session.getMapper(PaymentMapper.class);
 
-            return mapper.findPaymentByUtr(utrNumber);
+            return mapper.findPaymentByUtr(transactionId);
 
         }
 

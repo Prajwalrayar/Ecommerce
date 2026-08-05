@@ -16,8 +16,8 @@
         <id property="paymentId"
             column="payment_id"/>
 
-        <result property="utrNumber"
-                column="utr_number"/>
+        <result property="transactionId"
+                column="transaction_id"/>
 
         <result property="paymentMethod"
                 column="payment_method"/>
@@ -90,7 +90,7 @@
 
         payment_id,
 
-        utr_number,
+        transaction_id,
 
         user_id,
 
@@ -112,7 +112,7 @@
 
         #{paymentId},
 
-        #{utrNumber},
+        #{transactionId},
 
         #{customer.userId},
 
@@ -142,7 +142,7 @@
 
         SET
 
-        utr_number=#{utrNumber},
+        transaction_id=#{transactionId},
 
         payment_method=#{paymentMethod},
 
@@ -224,7 +224,7 @@
     <!-- Find By UTR -->
     <!-- ===================================================== -->
 
-    <select id="findPaymentByUtr"
+    <select id="findPaymentByTransactionId"
             resultMap="PaymentResultMap">
 
         SELECT
@@ -250,7 +250,7 @@
         INNER JOIN orders o
         ON p.order_id=o.order_id
 
-        WHERE p.utr_number=#{utrNumber}
+        WHERE p.transaction_id=#{transactionId}
 
     </select>
 
@@ -435,7 +435,7 @@
 
         OR
 
-        LOWER(p.utr_number)
+        LOWER(p.transaction_id)
         LIKE LOWER(CONCAT('%',#{keyword},'%'))
 
         )
@@ -485,7 +485,7 @@
 
         OR
 
-        LOWER(p.utr_number)
+        LOWER(p.transaction_id)
         LIKE LOWER(CONCAT('%',#{keyword},'%'))
 
         )
@@ -533,7 +533,7 @@
 
         OR
 
-        LOWER(p.utr_number)
+        LOWER(p.transaction_id)
         LIKE LOWER(CONCAT('%',#{keyword},'%'))
 
     </select>

@@ -20,7 +20,7 @@ public class Payment {
     /**
      * UTR Number.
      */
-    private String utrNumber;
+    private String transactionId;
 
     /**
      * Customer.
@@ -57,11 +57,15 @@ public class Payment {
      */
     private LocalDateTime paymentDate;
 
+    public Payment(){
+
+    }
+
     /**
      * Parameterized Constructor.
      *
      * @param paymentId Payment ID
-     * @param utrNumber UTR Number
+     * @param transactionId UTR Number
      * @param customer Customer
      * @param order Order
      * @param paymentMethod Payment Method
@@ -72,7 +76,7 @@ public class Payment {
      */
     public Payment(
             String paymentId,
-            String utrNumber,
+            String transactionId,
             Customer customer,
             Order order,
             PaymentMethod paymentMethod,
@@ -82,7 +86,7 @@ public class Payment {
             LocalDateTime paymentDate) {
 
         this.paymentId = paymentId;
-        this.utrNumber = utrNumber;
+        this.transactionId = transactionId;
         this.customer = customer;
         this.order = order;
         this.paymentMethod = paymentMethod;
@@ -105,15 +109,15 @@ public class Payment {
 
     }
 
-    public String getUtrNumber() {
+    public String getTransactionId() {
 
-        return utrNumber;
+        return transactionId;
 
     }
 
-    public void setUtrNumber(String utrNumber) {
+    public void setTransactionId(String transactionId) {
 
-        this.utrNumber = utrNumber;
+        this.transactionId = transactionId;
 
     }
 
@@ -215,7 +219,7 @@ public class Payment {
 
                 new String[]{
                         "UTR Number",
-                        utrNumber
+                        transactionId
                 },
 
                 new String[]{
@@ -292,7 +296,7 @@ public class Payment {
 
         return "Payment{" +
                 "paymentId='" + paymentId + '\'' +
-                ", utrNumber='" + utrNumber + '\'' +
+                ", utrNumber='" + transactionId + '\'' +
                 ", customer=" + customer.getUserName() +
                 ", order=" + order.getOrderId() +
                 ", paymentMethod=" + paymentMethod +

@@ -89,6 +89,9 @@ public interface OrderMapper {
 
     );
 
+
+    List<Order> findCancelableOrders(String customerId);
+
     // Finds Seller Order by Tracking Number.
     Order findOrderByIdAndSeller(
             @Param("orderId") String orderId,
