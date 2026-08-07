@@ -53,6 +53,8 @@ public class OrderService {
     private final CustomerDAO customerDAO = new CustomerDAO();
     private final ProductDAO productDAO = new ProductDAO();
 
+    private AddressDAO addressDAO = new AddressDAO();
+
     // Customer Order Table Headers.
 
     private static final String[] CUSTOMER_HEADERS = {
@@ -120,6 +122,27 @@ public class OrderService {
      */
     public void placeOrder(Customer customer) {
 
+        if (customer.getAddress() == null) {
+
+            DisplayUtil.printMessage("Delivery Address Not Found.");
+
+            String choice = InputUtil.readString("Do You Want To Add Address? (YES/NO): ")
+                    .trim()
+                    .toUpperCase();
+
+            if (!(choice.equalsIgnoreCase("YES")
+                    || choice.equalsIgnoreCase("Y"))){
+
+                DisplayUtil.printMessage("Order Cancelled.");
+
+                return;
+
+            }
+
+            updateCustomerAddress(customer);
+
+        }
+
         if (!validateCustomerCart(customer)) {
 
             return;
@@ -136,7 +159,6 @@ public class OrderService {
             return;
 
         }
-
         createOrder(cart);
 
     }
@@ -213,10 +235,10 @@ public class OrderService {
 
         displaySellerOrders(
 
-                orderDAO.findOrdersBySeller(
+                orderDAO.findPendingApprovalOrdersBySeller(
                         seller.getUserId()),
 
-                "MY ORDERS"
+                "PENDING APPROVAL ORDERS"
 
         );
 
@@ -267,8 +289,7 @@ public class OrderService {
 
         if (payment == null) {
 
-            orderDAO.deleteOrder(
-                    order.getOrderId());
+            orderDAO.deleteOrder(order.getOrderId());
 
             DisplayUtil.printMessage(
                     "Payment Cancelled.");
@@ -276,6 +297,11 @@ public class OrderService {
             return;
 
         }
+
+
+        inventoryService.findInventoryByProduct(order.getProduct());
+
+        updateInventory(inventory, -order.getQuantity());
 
         cartDAO.deleteCartItem(
                 cart.getCartId());
@@ -515,16 +541,13 @@ public class OrderService {
 
         }
 
-        if (order.getOrderStatus()
-                == OrderStatus.CONFIRMED) {
+        if (order.getOrderStatus() == OrderStatus.CONFIRMED
+                || order.getOrderStatus() == OrderStatus.PENDING_APPROVAL) {
 
             Inventory inventory =
-                    inventoryService.findInventoryByProduct(
-                            order.getProduct());
+                    inventoryService.findInventoryByProduct(order.getProduct());
 
-            updateInventory(
-                    inventory,
-                    order.getQuantity());
+            updateInventory(inventory, order.getQuantity());
 
         }
 
@@ -1113,48 +1136,24 @@ public class OrderService {
 
         }
 
-        Payment payment =
-                getPaymentByOrder(order);
+        Payment payment = getPaymentByOrder(order);
 
         if (payment == null) {
-
-            DisplayUtil.printMessage(
-                    "Payment Record Not Found.");
-
+            DisplayUtil.printMessage("Payment Record Not Found.");
             return;
-
         }
 
-        if (payment.getPaymentMethod()
-                != PaymentMethod.CASH_ON_DELIVERY
-
-                &&
-
-                payment.getPaymentStatus()
-                        != PaymentStatus.SUCCESS) {
-
-            DisplayUtil.printMessage(
-                    "Payment Not Completed.");
-
+        if (payment.getPaymentMethod() != PaymentMethod.CASH_ON_DELIVERY
+                && payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
+            DisplayUtil.printMessage("Payment Not Completed.");
             return;
-
         }
 
-        order.setOrderStatus(
-                OrderStatus.CONFIRMED);
+        order.setOrderStatus(OrderStatus.CONFIRMED);
 
         orderDAO.updateOrderStatus(order);
 
-        Inventory inventory =
-                inventoryService.findInventoryByProduct(
-                        order.getProduct());
-
-        updateInventory(
-                inventory,
-                -order.getQuantity());
-
-        DisplayUtil.printSuccess(
-                "Order Confirmed Successfully.");
+        DisplayUtil.printSuccess("Order Confirmed Successfully.");
 
     }
 
@@ -1684,6 +1683,89 @@ public class OrderService {
 
                 default:
                     DisplayUtil.printInvalidChoice();
+
+            }
+
+        }
+
+    }
+
+    private void updateCustomerAddress(Customer customer) {
+
+        while (true) {
+
+            try {
+
+                System.out.println("\n========== ADD DELIVERY ADDRESS ==========");
+
+                String houseNumber =
+                        InputUtil.readString("Enter House Number: ");
+
+                String street =
+                        InputUtil.readString("Enter Street: ");
+
+                String city =
+                        InputUtil.readString("Enter City: ");
+
+                String state =
+                        InputUtil.readString("Enter State: ");
+
+                String country =
+                        InputUtil.readString("Enter Country: ");
+
+                String zipCode =
+                        InputUtil.readString("Enter Zip Code: ");
+
+                Address address;
+
+                if (customer.getAddress() != null) {
+
+                    address = customer.getAddress();
+
+                    address.setHouseNumber(houseNumber);
+                    address.setStreet(street);
+                    address.setCity(city);
+                    address.setState(state);
+                    address.setCountry(country);
+                    address.setZipCode(zipCode);
+
+                    ValidationUtil.validateAddress(address);
+
+                    addressDAO.updateAddress(address);
+
+                } else {
+
+                    address = new Address(
+                            IdGenerator.generateId("ADDR"),
+                            houseNumber,
+                            street,
+                            city,
+                            state,
+                            country,
+                            zipCode
+                    );
+
+                    ValidationUtil.validateAddress(address);
+
+                    addressDAO.insertAddress(address);
+
+                }
+
+                customer.setAddress(address);
+
+                customerDAO.updateCustomer(customer);
+
+                DisplayUtil.printSuccess(
+                        "Address Saved Successfully.");
+
+                break;
+
+            }
+
+            catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
 
             }
 

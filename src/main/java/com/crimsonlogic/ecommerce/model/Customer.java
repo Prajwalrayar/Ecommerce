@@ -64,11 +64,7 @@ public class Customer extends User {
 
     }
 
-    /**
-     * Returns Customer details in table format.
-     *
-     * @return Customer profile rows
-     */
+    // Returns Customer details in table format.
     @Override
     public List<String[]> getTableRows() {
 
@@ -78,11 +74,71 @@ public class Customer extends User {
 
                 "Wallet Balance",
 
-                String.format(
-                        "%.2f",
-                        walletBalance)
+                String.format("%.2f", walletBalance)
 
         });
+
+        if (getAddress() != null) {
+
+            rows.add(new String[]{
+
+                    "House Number",
+
+                    getAddress().getHouseNumber()
+
+            });
+
+            rows.add(new String[]{
+
+                    "Street",
+
+                    getAddress().getStreet()
+
+            });
+
+            rows.add(new String[]{
+
+                    "City",
+
+                    getAddress().getCity()
+
+            });
+
+            rows.add(new String[]{
+
+                    "State",
+
+                    getAddress().getState()
+
+            });
+
+            rows.add(new String[]{
+
+                    "Country",
+
+                    getAddress().getCountry()
+
+            });
+
+            rows.add(new String[]{
+
+                    "ZIP Code",
+
+                    getAddress().getZipCode()
+
+            });
+
+        } else {
+
+            rows.add(new String[]{
+
+                    "Address",
+
+                    "Not Available"
+
+            });
+
+        }
 
         return rows;
 

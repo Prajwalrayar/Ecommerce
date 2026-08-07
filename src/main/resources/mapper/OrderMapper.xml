@@ -236,6 +236,40 @@
 
     </select>
 
+    <select id="findPendingApprovalOrdersBySeller"
+            resultMap="OrderResultMap">
+
+        SELECT
+
+        o.*,
+
+        c.user_id AS customer_id,
+        c.user_name AS customer_name,
+        c.user_email AS customer_email,
+        c.user_phone AS customer_phone,
+        c.wallet_balance,
+
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_status
+
+        FROM orders o
+
+        INNER JOIN customers c
+        ON o.user_id = c.user_id
+
+        INNER JOIN products p
+        ON o.product_id = p.product_id
+
+        WHERE p.user_id = #{sellerId}
+
+        AND o.order_status = 'PENDING_APPROVAL'
+
+        ORDER BY o.order_date DESC
+
+    </select>
+
     <!-- ===================================================== -->
     <!-- Find Seller Orders -->
     <!-- ===================================================== -->
@@ -297,17 +331,19 @@
         FROM orders o
 
         INNER JOIN customers c
-        ON o.user_id=c.user_id
+        ON o.user_id = c.user_id
 
         INNER JOIN products p
-        ON o.product_id=p.product_id
+        ON o.product_id = p.product_id
 
         LEFT JOIN payments pay
-        ON o.order_id=pay.order_id
+        ON o.order_id = pay.order_id
 
-        WHERE o.user_id=#{customerId}
+        WHERE o.user_id = #{customerId}
 
         AND pay.order_id IS NULL
+
+        AND o.order_status = 'PAYMENT_PENDING'
 
     </select>
 
