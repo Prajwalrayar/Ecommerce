@@ -3,6 +3,7 @@ package com.crimsonlogic.ecommerce.model;
 import com.crimsonlogic.ecommerce.enums.Role;
 import com.crimsonlogic.ecommerce.model.abstraction.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,104 +45,71 @@ public class Customer extends User {
      * @param userPassword Customer Password
      * @param address Customer Address
      */
-    public Customer(String userId,
-                    String userName,
-                    String userEmail,
-                    String userPhNo,
-                    String userPassword,
-                    Address address,
+    public Customer(String userId, String userName, String userEmail,
+                    String userPhNo, String userPassword, Address address,
                     double walletBalance) {
 
-        super(userId,
-                userName,
-                userEmail,
-                userPhNo,
-                userPassword,
-                address);
+        super(userId, userName, userEmail,
+                userPhNo, userPassword, address);
 
         setRole(Role.CUSTOMER);
         this.walletBalance = walletBalance;
-
     }
 
     // Returns Customer details in table format.
     @Override
     public List<String[]> getTableRows() {
 
-        List<String[]> rows = super.getTableRows();
+        List<String[]> rows = new ArrayList<>();
 
         rows.add(new String[]{
-
-                "Wallet Balance",
-
-                String.format("%.2f", walletBalance)
-
+                "User ID",
+                getUserId()
         });
 
-        if (getAddress() != null) {
+        rows.add(new String[]{
+                "Name",
+                getUserName()
+        });
 
-            rows.add(new String[]{
+        rows.add(new String[]{
+                "Email",
+                getUserEmail()
+        });
 
-                    "House Number",
+        rows.add(new String[]{
+                "Phone Number",
+                getUserPhNo()
+        });
 
-                    getAddress().getHouseNumber()
+        rows.add(new String[]{
+                "Role",
+                getRole().name()
+        });
 
-            });
+        rows.add(new String[]{
+                "Address",
+                getFormattedAddress()
+        });
 
-            rows.add(new String[]{
-
-                    "Street",
-
-                    getAddress().getStreet()
-
-            });
-
-            rows.add(new String[]{
-
-                    "City",
-
-                    getAddress().getCity()
-
-            });
-
-            rows.add(new String[]{
-
-                    "State",
-
-                    getAddress().getState()
-
-            });
-
-            rows.add(new String[]{
-
-                    "Country",
-
-                    getAddress().getCountry()
-
-            });
-
-            rows.add(new String[]{
-
-                    "ZIP Code",
-
-                    getAddress().getZipCode()
-
-            });
-
-        } else {
-
-            rows.add(new String[]{
-
-                    "Address",
-
-                    "Not Available"
-
-            });
-
-        }
+        rows.add(new String[]{
+                "Wallet Balance",
+                String.format("%.2f", walletBalance)
+        });
 
         return rows;
-
     }
 
+    private String getFormattedAddress() {
+
+        if (getAddress() == null) {
+            return "Not Available";
+        }
+
+        Address address = getAddress();
+
+        return address.getHouseNumber() + ", " + address.getStreet() + " Street, "
+                + address.getCity() + ", " + address.getZipCode() + "\n"
+                + address.getState() + ", " + address.getCountry();
+    }
 }

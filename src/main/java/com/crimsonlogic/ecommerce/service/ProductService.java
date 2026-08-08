@@ -17,6 +17,8 @@ import com.crimsonlogic.ecommerce.util.ValidationUtil;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.crimsonlogic.ecommerce.util.ValidationUtil.isSameProductName;
+
 /**
  * Service class responsible for Product operations.
  */
@@ -612,9 +614,20 @@ public class ProductService {
     public Product findProductByName(
             String productName) {
 
-        return productDAO.findProductByName(
-                productName);
+        if (productName == null
+                || productName.isBlank()) {
 
+            return null;
+        }
+
+        return productDAO.findAllProducts()
+                .stream()
+                .filter(product ->
+                        isSameProductName(
+                                product.getProductName(),
+                                productName))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -685,8 +698,9 @@ public class ProductService {
                         seller.getUserId())
                 .stream()
                 .anyMatch(product ->
-                        product.getProductName()
-                                .equalsIgnoreCase(productName));
+                        isSameProductName(
+                                product.getProductName(),
+                                productName));
 
     }
 

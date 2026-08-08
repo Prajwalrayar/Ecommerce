@@ -1656,29 +1656,24 @@ public class OrderService {
             System.out.println("==========================================");
             System.out.println("1. WALLET");
             System.out.println("2. UPI");
-            System.out.println("3. DEBIT CARD");
-            System.out.println("4. NET BANKING");
-            System.out.println("5. CASH ON DELIVERY");
+            System.out.println("3. CASH ON DELIVERY");
             System.out.println("==========================================");
 
-            int choice =
-                    InputUtil.readInt("Enter Choice : ");
+            String choice = InputUtil.readString("Enter a method payment: ")
+                    .trim().toUpperCase();
 
             switch (choice) {
 
-                case 1:
+                case "WALLET":
+                case "1":
                     return PaymentMethod.WALLET;
 
-                case 2:
+                case "UPI":
+                case "2":
                     return PaymentMethod.UPI;
 
-                case 3:
-                    return PaymentMethod.DEBIT_CARD;
-
-                case 4:
-                    return PaymentMethod.NET_BANKING;
-
-                case 5:
+                case "CASH ON DELIVERY":
+                case "3":
                     return PaymentMethod.CASH_ON_DELIVERY;
 
                 default:

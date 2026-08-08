@@ -19,102 +19,42 @@ public class CustomerService extends UserService<Customer> {
 
     private final CustomerDAO customerDAO = new CustomerDAO();
 
-    private final AddressDAO addressDAO = new AddressDAO();
-
     // Updates Customer Profile for a Logged-in Customer
     @Override
     public void updateProfile(Customer customer) {
 
         // Update common details
         super.updateProfile(customer);
-
         while (true) {
 
             try {
 
-                String houseNumber =
-                        InputUtil.readOptionalString("Enter House Number: ");
+                String houseNumber = InputUtil.readString("Enter House Number: ");
 
-                // Remove Address
-                if (houseNumber == null) {
+                ValidationUtil.validateField(houseNumber, "House Number");
 
-                    if (customer.getAddress() != null) {
+                String street = InputUtil.readString("Enter Street: ");
 
-                        // Optional
-                        // addressDAO.deleteAddress(
-                        //         customer.getAddress().getAddressId());
+                ValidationUtil.validateField(street, "Street");
 
-                    }
+                String city = InputUtil.readString("Enter City: ");
 
-                    customer.setAddress(null);
+                ValidationUtil.validateLocationName(city,"City");
 
-                    customerDAO.updateCustomer(customer);
+                String state = InputUtil.readString("Enter State: ");
 
-                    break;
+                ValidationUtil.validateLocationName(state,"State");
 
-                }
+                String country = InputUtil.readString("Enter Country: ");
 
-                String street =
-                        InputUtil.readString("Enter Street: ");
+                ValidationUtil.validateLocationName(country, "Country");
 
-                String city =
-                        InputUtil.readString("Enter City: ");
+                String zipCode = InputUtil.readString("Enter Zip Code: ");
 
-                String state =
-                        InputUtil.readString("Enter State: ");
+                ValidationUtil.validateZipCode(zipCode);
 
-                String country =
-                        InputUtil.readString("Enter Country: ");
-
-                String zipCode =
-                        InputUtil.readString("Enter Zip Code: ");
-
-                Address address;
-
-                // Existing address
-                if (customer.getAddress() != null) {
-
-                    address = customer.getAddress();
-
-                    address.setHouseNumber(houseNumber);
-                    address.setStreet(street);
-                    address.setCity(city);
-                    address.setState(state);
-                    address.setCountry(country);
-                    address.setZipCode(zipCode);
-
-                    ValidationUtil.validateAddress(address);
-
-                    addressDAO.updateAddress(address);
-
-                }
-
-                // New address
-                else {
-
-                    address = new Address(
-
-                            IdGenerator.generateId("ADDR"),
-
-                            houseNumber,
-
-                            street,
-
-                            city,
-
-                            state,
-
-                            country,
-
-                            zipCode
-
-                    );
-
-                    ValidationUtil.validateAddress(address);
-
-                    addressDAO.insertAddress(address);
-
-                }
+                Address address = new Address(IdGenerator.generateId("ADDR"),
+                                houseNumber, street, city, state, country, zipCode);
 
                 customer.setAddress(address);
 
@@ -122,20 +62,12 @@ public class CustomerService extends UserService<Customer> {
 
                 break;
 
+            } catch (ValidationException exception) {
+                DisplayUtil.printMessage(exception.getMessage());
             }
-
-            catch (ValidationException exception) {
-
-                DisplayUtil.printMessage(
-                        exception.getMessage());
-
-            }
-
         }
 
-        DisplayUtil.printSuccess(
-                "Customer Profile Updated Successfully.");
-
+        DisplayUtil.printSuccess("Customer Profile Updated Successfully.");
     }
     // Deletes Customer Account.
     public boolean deleteAccount(Customer customer) {
