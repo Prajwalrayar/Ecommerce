@@ -67,6 +67,19 @@ public interface OrderMapper {
      */
     void updateOrderStatus(Order order);
 
+    /**
+     * Returns Seller Pending Approval Orders.
+     *
+     * @param sellerId Seller ID
+     * @return Pending Approval Orders
+     */
+    List<Order> findPendingApprovalOrdersBySeller(
+
+            @Param("sellerId")
+            String sellerId
+
+    );
+
     // Returns Orders that are not yet paid.
 
     List<Order> findOrdersWithoutPayment(@Param("customerId") String customerId);

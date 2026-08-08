@@ -39,10 +39,10 @@ public interface PaymentMapper {
     /**
      * Finds Payment by UTR Number.
      *
-     * @param utrNumber UTR Number
+     * @param transactionId UTR Number
      * @return Payment
      */
-    Payment findPaymentByUtr(@Param("utrNumber") String utrNumber);
+    Payment findPaymentByUtr(@Param("transactionId") String transactionId);
 
     /**
      * Returns Customer Payments.
@@ -50,7 +50,7 @@ public interface PaymentMapper {
      * @param customerId Customer ID
      * @return Payment List
      */
-    List<Payment> findPaymentsByCustomer(@Param("paymentId") String customerId);
+    List<Payment> findPaymentsByCustomer(@Param("customerId") String customerId);
 
     /**
      * Returns Seller Payments.
@@ -58,7 +58,7 @@ public interface PaymentMapper {
      * @param sellerId Seller ID
      * @return Payment List
      */
-    List<Payment> findPaymentsBySeller(@Param("paymentId") String sellerId);
+    List<Payment> findPaymentsBySeller(@Param("sellerId") String sellerId);
 
     /**
      * Returns All Payments.
@@ -72,10 +72,9 @@ public interface PaymentMapper {
      *
      * @param payment Payment
      */
-    void updatePaymentStatus(@Param("paymentId") Payment payment);
+    void updatePaymentStatus(Payment payment);
 
-    Payment findPaymentByOrder(
-            String orderId);
+    Payment findPaymentByOrder(String orderId);
 
     List<Payment> findPaymentsByCustomerAndKeyword(
 

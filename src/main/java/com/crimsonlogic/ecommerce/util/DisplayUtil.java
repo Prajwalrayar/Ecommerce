@@ -8,45 +8,17 @@ import java.util.List;
  */
 public class DisplayUtil {
 
-    /**
-     * Private Constructor.
-     */
+    // Private Constructor.
     private DisplayUtil() {
-
     }
 
-    /**
-     * Prints data in tabular format.
-     *
-     * @param title Table Title
-     * @param headers Column Headers
-     * @param rows Table Rows
-     */
+    // Prints data in tabular format.
     public static void printTable(String title,
-                                  String[] headers,
-                                  List<String[]> rows) {
+            String[] headers, List<String[]> rows) {
 
         int columns = headers.length;
-        int[] columnWidths = new int[columns];
 
-        // Calculate column widths
-        for (int i = 0; i < columns; i++) {
-            columnWidths[i] = headers[i].length();
-        }
-
-        for (String[] row : rows) {
-
-            for (int i = 0; i < columns; i++) {
-
-                String value = row[i] == null ? "N/A" : row[i];
-
-                if (value.length() > columnWidths[i]) {
-                    columnWidths[i] = value.length();
-                }
-
-            }
-
-        }
+        int[] columnWidths = calculateColumnWidths(headers, rows);
 
         System.out.println();
 
@@ -57,98 +29,125 @@ public class DisplayUtil {
         System.out.println(border);
 
         // Header
-
-        System.out.print("|");
-
-        for (int i = 0; i < columns; i++) {
-
-            System.out.printf(
-                    " %-" + columnWidths[i] + "s |",
-                    headers[i]);
-
+        printHeader(headers, columnWidths);
+        System.out.println(border);
+        // Rows
+        for (String[] row : rows) {
+            printRow(row, columnWidths);
         }
 
-        System.out.println();
-
         System.out.println(border);
+        System.out.println();
+    }
 
-        // Rows
+    // Calculates column widths.
+    private static int[] calculateColumnWidths(String[] headers, List<String[]> rows) {
+        int columns = headers.length;
 
+        int[] columnWidths = new int[columns];
+
+        // Header widths
+        for (int i = 0; i < columns; i++) {
+            columnWidths[i] = headers[i].length();
+        }
+
+        // Row widths
         for (String[] row : rows) {
-
-            System.out.print("|");
 
             for (int i = 0; i < columns; i++) {
 
-                String value =
-                        row[i] == null ? "N/A" : row[i];
+                String value = row[i] == null ? "N/A" : row[i];
 
-                System.out.printf(
-                        " %-" + columnWidths[i] + "s |",
-                        value);
+                String[] lines = value.split("\\R", -1);
+                for (String line : lines) {
 
+                    if (line.length() > columnWidths[i]) {
+
+                        columnWidths[i] = line.length();
+
+                    }
+                }
             }
-
-            System.out.println();
-
         }
-
-        System.out.println(border);
-
-        System.out.println();
-
+        return columnWidths;
     }
 
-    /**
-     * Prints a Success Message.
-     *
-     * @param message Success Message
-     */
+    // Prints table header.
+    private static void printHeader(String[] headers, int[] columnWidths) {
+
+        System.out.print("|");
+        for (int i = 0; i < headers.length; i++) {
+
+            System.out.printf(" %-" + columnWidths[i] + "s |", headers[i]);
+        }
+        System.out.println();
+    }
+
+    // Prints a table row.
+    private static void printRow(String[] row, int[] columnWidths) {
+
+        String[][] cellLines = new String[row.length][];
+
+        int rowHeight = 1;
+
+        // Split every cell into lines
+        for (int i = 0; i < row.length; i++) {
+
+            String value = row[i] == null ? "N/A" : row[i];
+
+            cellLines[i] = value.split("\\R", -1);
+
+            if (cellLines[i].length > rowHeight) {
+
+                rowHeight = cellLines[i].length;
+            }
+        }
+        // Print each physical line of the row
+        for (int line = 0; line < rowHeight; line++) {
+
+            System.out.print("|");
+
+            for (int column = 0; column < row.length; column++) {
+
+                String value = "";
+
+                if (line < cellLines[column].length) {
+                    value = cellLines[column][line];
+                }
+
+                System.out.printf(" %-" + columnWidths[column] + "s |", value);
+            }
+            System.out.println();
+        }
+    }
+
+    // Prints a Success Message.
     public static void printSuccess(String message) {
-
-        System.out.println();
-
         System.out.println("SUCCESS : " + message);
-
         System.out.println();
-
     }
+
+    // Prints an invalid choice message.
     public static void printInvalidChoice() {
-        System.out.println();
         System.out.println("Invalid Choice! Please try again.");
         System.out.println();
-
     }
-    /**
-     * Prints a Heading.
-     *
-     * @param heading Heading
-     */
+
+    // Prints a Heading.
     public static void printHeading(String heading) {
-
         System.out.println();
-
         System.out.println(heading);
-
         System.out.println();
-
     }
 
     // Prints a formatted message.
 
     public static void printMessage(String message) {
-
-        System.out.println();
         System.out.println(message);
-
     }
 
-    /**
-     * Creates table border.
-     *
-     * @param columnWidths Width of each column
-     * @return Border String
-     */
+    // Creates table border.
+
     private static String createBorder(int[] columnWidths) {
 
         StringBuilder border = new StringBuilder();
@@ -158,13 +157,9 @@ public class DisplayUtil {
         for (int width : columnWidths) {
 
             border.append("-".repeat(width + 2));
-
             border.append("+");
 
         }
-
         return border.toString();
-
     }
-
 }

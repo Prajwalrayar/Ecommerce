@@ -229,6 +229,26 @@ public class OrderDAO {
     }
 
 
+    /**
+     * Returns Pending Approval Orders of Seller.
+     *
+     * @param sellerId Seller ID
+     * @return Pending Approval Orders
+     */
+    public List<Order> findPendingApprovalOrdersBySeller(String sellerId) {
+
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
+
+            OrderMapper mapper =
+                    session.getMapper(OrderMapper.class);
+
+            return mapper.findPendingApprovalOrdersBySeller(
+                    sellerId);
+
+        }
+
+    }
     // Returns Seller Orders by Product.
     public List<Order> findOrdersBySellerAndProduct(String sellerId,
                                                     String productName) {

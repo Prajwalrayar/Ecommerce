@@ -38,12 +38,16 @@ public class ValidationUtil {
                     "^[A-Z](?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&*!?_+=-])[A-Za-z\\d@#$%^&*!?_+=-]{7,19}$");
 
     // Shop Name Validation.
-
     private static final Pattern SHOP_PATTERN = Pattern.compile("^[A-Za-z0-9&'.,()\\- ]{3,60}$");
 
     // Indian ZIP Code.
-
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[1-9][0-9]{5}$");
+
+    private static final Pattern UPI_ID_PATTERN =
+            Pattern.compile("^(?:[A-Za-z0-9._-]{2,50}|[6-9]\\d{9})@[A-Za-z]{2,20}$");
+
+    private static final Pattern LOCATION_PATTERN =
+            Pattern.compile("^(?=.{3,30}$)[A-Za-z]+(?:[ .'-][A-Za-z]+)*$");
 
     // User Name Validation
     public static void validateUserName(String name)
@@ -143,16 +147,18 @@ public class ValidationUtil {
     }
 
     // Address Validation
-    public static void validateAddress(Address address) throws ValidationException {
+    public static void validateAddress(Address address)
+            throws ValidationException {
+
         if (address == null) {
             return;
         }
-        validateField(address.getHouseNumber(), "House Number");
-        validateField(address.getStreet(), "Street");
-        validateField(address.getCity(), "City");
-        validateField(address.getState(), "State");
-        validateField(address.getCountry(), "Country");
-        validateZipCode(address.getZipCode());
+
+        validateField(
+                address.getHouseNumber(),
+                "House Number");
+
+        validateAddressFields(address);
     }
 
     // ZIP Code Validation
@@ -168,19 +174,14 @@ public class ValidationUtil {
     }
 
     // Generic Field Validation
-    private static void validateField(String value, String fieldName) throws ValidationException {
+    public static void validateField(String value, String fieldName) throws ValidationException {
 
         if (value == null || value.trim().isEmpty()) {
             throw new ValidationException(fieldName + " cannot be empty.");
         }
     }
 
-    /**
-     * Validates Category Name.
-     *
-     * @param categoryName Category Name
-     * @throws ValidationException if Category Name is invalid
-     */
+    // Validates Category Name.
     public static void validateCategoryName(String categoryName) throws ValidationException {
 
         if (categoryName == null || categoryName.isBlank()) {
@@ -228,28 +229,9 @@ public class ValidationUtil {
 
             throw new ValidationException(
                     "Address cannot be empty.");
-
         }
 
-        validateField(
-                address.getStreet(),
-                "Street");
-
-        validateField(
-                address.getCity(),
-                "City");
-
-        validateField(
-                address.getState(),
-                "State");
-
-        validateField(
-                address.getCountry(),
-                "Country");
-
-        validateZipCode(
-                address.getZipCode());
-
+        validateAddressFields(address);
     }
 
     // Validates Category Description.
@@ -318,12 +300,7 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Product Price.
-     *
-     * @param price Product Price
-     * @throws ValidationException if Price is invalid
-     */
+    // Validates Product Price.
     public static void validateProductPrice(double price)
             throws ValidationException {
 
@@ -335,12 +312,28 @@ public class ValidationUtil {
         }
 
     }
-    /**
-     * Validates Quantity.
-     *
-     * @param quantity Quantity
-     * @throws ValidationException if invalid
-     */
+
+    public static void validateLocationName(String value, String fieldName)
+            throws ValidationException {
+
+        validateField(value, fieldName);
+
+        String location = value.trim();
+
+        if (!LOCATION_PATTERN.matcher(location).matches()) {
+            throw new ValidationException("Invalid " + fieldName + " name.");
+        }
+        if (hasRepeatedCharacters(location)) {
+            throw new ValidationException(
+                    fieldName + " cannot contain more than two consecutive identical characters.");
+        }
+        if (hasAlphabetSequence(location.replaceAll("[ .'-]", ""))) {
+            throw new ValidationException(
+                    fieldName + " cannot contain alphabetical sequences.");
+        }
+    }
+
+    // Validates Quantity.
     public static void validateQuantity(int quantity)
             throws ValidationException {
 
@@ -384,6 +377,20 @@ public class ValidationUtil {
 
         return false;
 
+    }
+
+    private static void validateAddressFields(Address address)
+            throws ValidationException {
+
+        validateField(address.getStreet(), "Street");
+
+        validateLocationName(address.getCity(), "City");
+
+        validateLocationName(address.getState(), "State");
+
+        validateLocationName(address.getCountry(), "Country");
+
+        validateZipCode(address.getZipCode());
     }
 
     /**
@@ -446,6 +453,18 @@ public class ValidationUtil {
 
     }
 
+    public static void validateUpiId(String upiId)
+            throws ValidationException {
+
+        validateField(upiId, "UPI ID");
+
+        if (!UPI_ID_PATTERN.matcher(upiId.trim()).matches()) {
+
+            throw new ValidationException("Invalid UPI ID. "
+                            + "Example: username@upi or 9876543210@upi");
+        }
+    }
+
 
     // Helper Method
     /**
@@ -464,5 +483,20 @@ public class ValidationUtil {
             }
         }
         return false;
+    }
+
+    public static boolean isSameProductName(
+            String first,
+            String second) {
+
+        if (first == null || second == null) {
+            return false;
+        }
+
+        return first
+                .replaceAll("\\s+", "")
+                .equalsIgnoreCase(
+                        second.replaceAll("\\s+", "")
+                );
     }
 }

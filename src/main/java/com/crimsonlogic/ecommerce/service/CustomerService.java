@@ -1,5 +1,6 @@
 package com.crimsonlogic.ecommerce.service;
 
+import com.crimsonlogic.ecommerce.dao.AddressDAO;
 import com.crimsonlogic.ecommerce.dao.CustomerDAO;
 import com.crimsonlogic.ecommerce.exceptionhandling.UserNotFoundException;
 import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
@@ -24,32 +25,36 @@ public class CustomerService extends UserService<Customer> {
 
         // Update common details
         super.updateProfile(customer);
-
-        System.out.println("\n========== UPDATE ADDRESS ==========");
-
         while (true) {
 
             try {
-                String houseNumber = InputUtil.readOptionalString("Enter House Number: ");
-                if (houseNumber == null) {
-                    customer.setAddress(null);
-                    customerDAO.updateCustomer(customer);
-                    break;
-                }
+
+                String houseNumber = InputUtil.readString("Enter House Number: ");
+
+                ValidationUtil.validateField(houseNumber, "House Number");
+
                 String street = InputUtil.readString("Enter Street: ");
+
+                ValidationUtil.validateField(street, "Street");
 
                 String city = InputUtil.readString("Enter City: ");
 
+                ValidationUtil.validateLocationName(city,"City");
+
                 String state = InputUtil.readString("Enter State: ");
+
+                ValidationUtil.validateLocationName(state,"State");
 
                 String country = InputUtil.readString("Enter Country: ");
 
+                ValidationUtil.validateLocationName(country, "Country");
+
                 String zipCode = InputUtil.readString("Enter Zip Code: ");
 
-                Address address = new Address(IdGenerator.generateId("ADDR"),
-                        houseNumber, street, city, state, country, zipCode);
+                ValidationUtil.validateZipCode(zipCode);
 
-                ValidationUtil.validateAddress(address);
+                Address address = new Address(IdGenerator.generateId("ADDR"),
+                                houseNumber, street, city, state, country, zipCode);
 
                 customer.setAddress(address);
 
@@ -58,18 +63,12 @@ public class CustomerService extends UserService<Customer> {
                 break;
 
             } catch (ValidationException exception) {
-
                 DisplayUtil.printMessage(exception.getMessage());
-
             }
-
         }
 
-        DisplayUtil.printSuccess(
-                "Customer Profile Updated Successfully.");
-
+        DisplayUtil.printSuccess("Customer Profile Updated Successfully.");
     }
-
     // Deletes Customer Account.
     public boolean deleteAccount(Customer customer) {
 

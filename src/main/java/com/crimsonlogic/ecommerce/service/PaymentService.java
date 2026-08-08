@@ -3,6 +3,7 @@ package com.crimsonlogic.ecommerce.service;
 import com.crimsonlogic.ecommerce.dao.CustomerDAO;
 import com.crimsonlogic.ecommerce.dao.OrderDAO;
 import com.crimsonlogic.ecommerce.dao.PaymentDAO;
+import com.crimsonlogic.ecommerce.exceptionhandling.ValidationException;
 import com.crimsonlogic.ecommerce.model.Seller;
 import com.crimsonlogic.ecommerce.enums.OrderStatus;
 import com.crimsonlogic.ecommerce.enums.PaymentMethod;
@@ -13,6 +14,7 @@ import com.crimsonlogic.ecommerce.model.Payment;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
+import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -66,10 +68,7 @@ public class PaymentService {
 
             case "wallet":
 
-                walletPayment(
-                        customer,
-                        order);
-
+                walletPayment(customer, order);
                 break;
 
             case "upi":
@@ -219,33 +218,24 @@ public class PaymentService {
      */
     private void upiPayment(Customer customer, Order order) {
 
-        String upiId =
-                InputUtil.readString(
-                                "Enter UPI ID : ")
-                        .trim();
+        while (true) {
 
-        while (!isValidUpi(upiId)) {
+            try {
 
-            DisplayUtil.printMessage(
-                    "Invalid UPI ID.");
+                String upiId = InputUtil.readString("Enter UPI ID : ").trim();
 
-            upiId = InputUtil.readString(
-                    "Enter UPI ID : ");
+                ValidationUtil.validateUpiId(upiId);
 
+                createPayment(customer, order, PaymentMethod.UPI,
+                        PaymentStatus.SUCCESS, upiId);
+
+                break;
+
+            } catch (ValidationException exception) {
+
+                DisplayUtil.printMessage(exception.getMessage());
+            }
         }
-
-        createPayment(
-
-                customer,
-
-                order,
-
-                PaymentMethod.UPI,
-
-                PaymentStatus.SUCCESS,
-
-                upiId);
-
     }
 
     /**
@@ -632,7 +622,7 @@ public class PaymentService {
                                     100000000000L,
                                     1000000000000L);
 
-            utr = "UTR" + number;
+            utr = "TRA" + number;
 
         } while (paymentDAO.findPaymentByUtr(utr) != null);
 
@@ -745,23 +735,6 @@ public class PaymentService {
                 })
 
                 .toList();
-
-    }
-
-    /**
-     * Validates UPI ID.
-     *
-     * @param upiId UPI ID
-     * @return true if valid
-     */
-    private boolean isValidUpi(
-            String upiId) {
-
-        return Pattern.matches(
-
-                "^[a-zA-Z0-9._-]{2,}@(ybl|ibl|okhdfcbank|okaxis|oksbi|okicici|paytm|apl)$",
-
-                upiId);
 
     }
 

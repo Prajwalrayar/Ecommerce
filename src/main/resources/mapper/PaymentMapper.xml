@@ -76,6 +76,26 @@
             <result property="orderDate"
                     column="order_date"/>
 
+            <association property="product"
+                         javaType="com.crimsonlogic.ecommerce.model.Product">
+
+                <id property="productId"
+                    column="product_id"/>
+
+                <result property="productName"
+                        column="product_name"/>
+
+                <result property="productDescription"
+                        column="product_description"/>
+
+                <result property="productPrice"
+                        column="product_price"/>
+
+                <result property="productStatus"
+                        column="product_status"/>
+
+            </association>
+
         </association>
 
     </resultMap>
@@ -203,20 +223,30 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
 
-        WHERE p.payment_id=#{paymentId}
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE p.payment_id = #{paymentId}
 
     </select>
 
@@ -237,20 +267,30 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
 
-        WHERE p.transaction_id=#{transactionId}
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE p.transaction_id = #{transactionId}
 
     </select>
 
@@ -271,23 +311,32 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
 
-        WHERE p.order_id=#{orderId}
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE p.order_id = #{orderId}
 
     </select>
-
     <!-- ===================================================== -->
     <!-- Find Payments By Customer -->
     <!-- ===================================================== -->
@@ -305,20 +354,30 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
 
-        WHERE p.user_id=#{customerId}
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
+
+        WHERE p.user_id = #{customerId}
 
         ORDER BY p.payment_date DESC
 
@@ -341,23 +400,30 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
 
         INNER JOIN products pr
-        ON o.product_id=pr.product_id
+        ON o.product_id = pr.product_id
 
-        WHERE pr.user_id=#{sellerId}
+        WHERE pr.user_id = #{sellerId}
 
         ORDER BY p.payment_date DESC
 
@@ -380,18 +446,28 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
         INNER JOIN customers c
-        ON p.user_id=c.user_id
+        ON p.user_id = c.user_id
 
         INNER JOIN orders o
-        ON p.order_id=o.order_id
+        ON p.order_id = o.order_id
+
+        INNER JOIN products pr
+        ON o.product_id = pr.product_id
 
         ORDER BY p.payment_date DESC
 
@@ -410,10 +486,17 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
@@ -455,10 +538,17 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 
@@ -505,10 +595,17 @@
         c.user_phone AS customer_phone,
         c.wallet_balance,
 
+        o.order_id,
         o.quantity,
         o.total_price,
         o.order_status,
-        o.order_date
+        o.order_date,
+
+        pr.product_id,
+        pr.product_name,
+        pr.product_description,
+        pr.product_price,
+        pr.product_status
 
         FROM payments p
 

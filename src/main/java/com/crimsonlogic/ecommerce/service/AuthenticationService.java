@@ -54,9 +54,7 @@ public class AuthenticationService {
 
         String phone = readValidPhone();
 
-        String password =
-                PasswordUtil.encryptPassword(
-                        readValidPassword());
+        String password = PasswordUtil.encryptPassword(readValidPassword());
 
         String shopName = readValidShopName();
 
@@ -66,25 +64,8 @@ public class AuthenticationService {
 
         addressDAO.insertAddress(address);
 
-        Seller seller = new Seller(
-
-                IdGenerator.generateId("SEL"),
-
-                name,
-
-                email,
-
-                phone,
-
-                password,
-
-                address,
-
-                shopName,
-
-                shopAddress
-
-        );
+        Seller seller = new Seller(IdGenerator.generateId("SEL"),
+                name, email, phone, password, address, shopName, shopAddress);
 
         sellerDAO.insertSeller(seller);
 
@@ -365,58 +346,26 @@ public class AuthenticationService {
 
             try {
 
-                String street =
-                        InputUtil.readString(
-                                "Enter Street: ");
+                String street = InputUtil.readString("Enter Street: ");
 
-                String city =
-                        InputUtil.readString(
-                                "Enter City: ");
+                String city = InputUtil.readString("Enter City: ");
 
-                String state =
-                        InputUtil.readString(
-                                "Enter State: ");
+                String state = InputUtil.readString("Enter State: ");
 
-                String country =
-                        InputUtil.readString(
-                                "Enter Country: ");
+                String country = InputUtil.readString("Enter Country: ");
 
-                String zipCode =
-                        InputUtil.readString(
-                                "Enter Zip Code: ");
+                String zipCode = InputUtil.readString("Enter Zip Code: ");
 
-                Address address = new Address(
+                Address address = new Address(IdGenerator.generateId("ADDR"), "", street, city, state, country, zipCode);
 
-                        IdGenerator.generateId("ADDR"),
-
-                        "",
-
-                        street,
-
-                        city,
-
-                        state,
-
-                        country,
-
-                        zipCode
-
-                );
-
-                ValidationUtil.validateSellerAddress(
-                        address);
-
+                ValidationUtil.validateSellerAddress(address);
                 return address;
-
-            } catch (ValidationException exception) {
-
-                DisplayUtil.printMessage(
-                        exception.getMessage());
-
             }
-
+            catch (ValidationException exception) {
+                DisplayUtil.printMessage(exception.getMessage());
+            }
+            System.out.println();
         }
-
     }
 
     /**
@@ -452,7 +401,7 @@ public class AuthenticationService {
      *
      * @return Customer
      */
-    public Customer registerCustomer() {
+        public Customer registerCustomer() {
 
         DisplayUtil.printMessage("Enter Customer Details");
 
