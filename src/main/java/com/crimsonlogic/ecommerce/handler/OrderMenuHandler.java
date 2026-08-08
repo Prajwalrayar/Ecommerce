@@ -2,10 +2,8 @@ package com.crimsonlogic.ecommerce.handler;
 
 import com.crimsonlogic.ecommerce.model.Customer;
 import com.crimsonlogic.ecommerce.model.Seller;
-import com.crimsonlogic.ecommerce.service.CartService;
-import com.crimsonlogic.ecommerce.service.InventoryService;
+import com.crimsonlogic.ecommerce.service.AuthenticationService;
 import com.crimsonlogic.ecommerce.service.OrderService;
-import com.crimsonlogic.ecommerce.service.ProductService;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 
@@ -18,25 +16,16 @@ public class OrderMenuHandler {
      * Order Service.
      */
     private final OrderService orderService;
-
     /**
      * Default Constructor.
      */
     public OrderMenuHandler() {
 
-        InventoryService inventoryService =
-                new InventoryService();
-
-        this.orderService =
-                new OrderService();
-
+        this.orderService = new OrderService();
     }
 
-    /**
-     * Displays Order Dashboard.
-     *
-     * @param customer Logged-in Customer
-     */
+    // Displays Customer Order Dashboard.
+
     public void showMenu(Customer customer) {
 
         boolean back = false;
@@ -45,10 +34,8 @@ public class OrderMenuHandler {
 
             showDashboard();
 
-            String choice = InputUtil.readString(
-                            "Enter Choice : ")
-                    .trim()
-                    .toLowerCase();
+            String choice = InputUtil.readString("Enter Choice : ")
+                            .trim().toLowerCase();
 
             switch (choice) {
 
@@ -85,11 +72,8 @@ public class OrderMenuHandler {
                 default:
 
                     DisplayUtil.printInvalidChoice();
-
             }
-
         }
-
     }
 
     /**
@@ -98,36 +82,73 @@ public class OrderMenuHandler {
      * @param seller Logged-in Seller
      */
     public void showSellerMenu(Seller seller) {
+
         boolean back = false;
 
         while (!back) {
 
             showSellerDashboard();
 
-            String choice = InputUtil.readString(
-                            "Enter Choice : ")
-                    .trim()
-                    .toLowerCase();
+            String choice = InputUtil.readString("Enter Choice : ")
+                            .trim().toLowerCase();
 
             switch (choice) {
 
                 case "view":
 
-                    orderService.viewSellerOrders(seller);
+                    orderService.viewSellerOrders(
+                            seller);
 
                     break;
 
                 case "search":
 
-                    orderService.searchOrder(seller);
+                    orderService.searchOrder(
+                            seller);
 
                     break;
 
                 case "track":
 
-                    orderService.trackOrder(seller);
+                    orderService.trackOrder(
+                            seller);
 
                     break;
+
+                case "approve":
+                case "reject":
+                case "order approval":
+                    showConfirmCancelMenu(seller);
+                    break;
+
+                case "back":
+                    back = true;
+                    break;
+
+                default:
+                    DisplayUtil.printInvalidChoice();
+            }
+        }
+    }
+
+    // Displays Confirm/Cancel Order Menu.
+
+    private void showConfirmCancelMenu(Seller seller) {
+
+        boolean back = false;
+
+        while (!back) {
+            System.out.println();
+            System.out.println("ORDER APPROVAL");
+            System.out.println("==========================================");
+            System.out.println("CONFIRM");
+            System.out.println("CANCEL");
+            System.out.println("BACK");
+
+            String choice = InputUtil.readString("Enter Choice : ")
+                            .trim().toLowerCase();
+
+            switch (choice) {
 
                 case "confirm":
 
@@ -135,9 +156,9 @@ public class OrderMenuHandler {
 
                     break;
 
-                case "update status":
+                case "cancel":
 
-                    orderService.updateOrderStatus(seller);
+                    orderService.cancelSellerOrder(seller);
 
                     break;
 
@@ -150,11 +171,43 @@ public class OrderMenuHandler {
                 default:
 
                     DisplayUtil.printInvalidChoice();
-
             }
-
         }
+    }
 
+    /**
+     * Displays Customer Order Dashboard.
+     */
+    private void showDashboard(){
+
+        System.out.println("ORDER MENU");
+
+        System.out.println("PLACE");
+        System.out.println("VIEW");
+        System.out.println("SEARCH");
+        System.out.println("CANCEL");
+        System.out.println("BACK");
+
+        System.out.println("==========================================");
+    }
+
+    /**
+     * Displays Seller Order Dashboard.
+     */
+    private void showSellerDashboard() {
+
+        System.out.println("SELLER ORDER MENU");
+
+        System.out.println("==========================================");
+
+        System.out.println("VIEW");
+        System.out.println("SEARCH");
+        System.out.println("TRACK");
+        System.out.println("ORDER APPROVAL");
+        System.out.println("BACK");
+
+        System.out.println(
+                "==========================================");
     }
 
     /**
@@ -168,10 +221,11 @@ public class OrderMenuHandler {
 
             showAdminDashboard();
 
-            String choice = InputUtil.readString(
-                            "Enter Choice : ")
-                    .trim()
-                    .toLowerCase();
+            String choice =
+                    InputUtil.readString(
+                                    "Enter Choice : ")
+                            .trim()
+                            .toLowerCase();
 
             switch (choice) {
 
@@ -220,46 +274,8 @@ public class OrderMenuHandler {
                 default:
 
                     DisplayUtil.printInvalidChoice();
-
             }
-
         }
-
-    }
-
-    /**
-     * Displays Order Dashboard.
-     */
-    private void showDashboard() {
-
-        System.out.println("\n==========================================");
-        System.out.println("               ORDER MENU");
-        System.out.println("==========================================");
-        System.out.println("PLACE");
-        System.out.println("VIEW");
-        System.out.println("SEARCH");
-        System.out.println("CANCEL");
-        System.out.println("BACK");
-        System.out.println("==========================================");
-
-    }
-
-    /**
-     * Displays Seller Order Dashboard.
-     */
-    private void showSellerDashboard() {
-
-        System.out.println("\n==========================================");
-        System.out.println("          SELLER ORDER MENU");
-        System.out.println("==========================================");
-        System.out.println("VIEW");
-        System.out.println("SEARCH");
-        System.out.println("TRACK");
-        System.out.println("CONFIRM");
-        System.out.println("UPDATE STATUS");
-        System.out.println("BACK");
-        System.out.println("==========================================");
-
     }
 
     /**
@@ -267,9 +283,12 @@ public class OrderMenuHandler {
      */
     private void showAdminDashboard() {
 
-        System.out.println("\n==========================================");
-        System.out.println("           ADMIN ORDER MENU");
-        System.out.println("==========================================");
+        System.out.println(
+                "           ADMIN ORDER MENU");
+
+        System.out.println(
+                "==========================================");
+
         System.out.println("VIEW");
         System.out.println("SEARCH");
         System.out.println("TRACK");
@@ -277,7 +296,8 @@ public class OrderMenuHandler {
         System.out.println("UPDATE STATUS");
         System.out.println("DELETE");
         System.out.println("BACK");
-        System.out.println("==========================================");
 
+        System.out.println(
+                "==========================================");
     }
 }

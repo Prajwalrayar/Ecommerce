@@ -21,6 +21,8 @@ public class Product {
      */
     private String productName;
 
+    private String brand;
+
     /**
      * Product Description.
      */
@@ -64,10 +66,12 @@ public class Product {
      * @param seller             Seller
      * @param productStatus      Product Status
      */
-    public Product(String productId, String productName, String productDescription, double productPrice, Category category, Seller seller, ProductStatus productStatus) {
+    public Product(String productId, String productName,String brand, String productDescription,
+                   double productPrice, Category category, Seller seller, ProductStatus productStatus) {
 
         this.productId = productId;
         this.productName = productName;
+        this.brand = brand;
         this.productDescription = productDescription;
         this.productPrice = productPrice;
         this.category = category;
@@ -134,6 +138,14 @@ public class Product {
 
     public void setProductStatus(ProductStatus productStatus) {
         this.productStatus = productStatus;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
     }
 
     // =====================================================

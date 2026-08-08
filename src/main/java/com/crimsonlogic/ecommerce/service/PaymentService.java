@@ -610,7 +610,7 @@ public class PaymentService {
      *
      * @return UTR Number
      */
-    private String generateUtrNumber() {
+    public String generateUtrNumber() {
 
         String utr;
 
@@ -619,17 +619,15 @@ public class PaymentService {
             long number =
                     ThreadLocalRandom.current()
                             .nextLong(
-                                    100000000000L,
-                                    1000000000000L);
+                                    100000000L,
+                                    1000000000L);
 
-            utr = "TRA" + number;
+            utr = "TXN" + number;
 
         } while (paymentDAO.findPaymentByUtr(utr) != null);
 
         return utr;
-
     }
-
     /**
      * Displays Seller Payments.
      *

@@ -21,6 +21,9 @@
         <result property="productName"
                 column="product_name"/>
 
+        <result property="brand"
+                column="brand"/>
+
         <result property="productDescription"
                 column="product_description"/>
 
@@ -116,6 +119,7 @@
 
         product_name,
 
+        brand,
         product_description,
 
         product_price,
@@ -133,6 +137,7 @@
         #{productId},
 
         #{productName},
+        #{brand},
 
         #{productDescription},
 

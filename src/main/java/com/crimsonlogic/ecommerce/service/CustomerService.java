@@ -19,68 +19,142 @@ public class CustomerService extends UserService<Customer> {
 
     private final CustomerDAO customerDAO = new CustomerDAO();
 
+    private final AddressDAO addressDAO = new AddressDAO();
+
     // Updates Customer Profile for a Logged-in Customer
     @Override
     public void updateProfile(Customer customer) {
 
         // Update common details
         super.updateProfile(customer);
+
         while (true) {
 
             try {
 
-                String houseNumber = InputUtil.readString("Enter House Number: ");
+                String houseNumber =
+                        InputUtil.readString(
+                                "Enter House Number: ");
 
-                ValidationUtil.validateField(houseNumber, "House Number");
+                ValidationUtil.validateField(
+                        houseNumber,
+                        "House Number");
 
-                String street = InputUtil.readString("Enter Street: ");
+                String street =
+                        InputUtil.readString(
+                                "Enter Street: ");
 
-                ValidationUtil.validateField(street, "Street");
+                ValidationUtil.validateField(
+                        street,
+                        "Street");
 
-                String city = InputUtil.readString("Enter City: ");
+                String city =
+                        InputUtil.readString(
+                                "Enter City: ");
 
-                ValidationUtil.validateLocationName(city,"City");
+                ValidationUtil.validateLocationName(
+                        city,
+                        "City");
 
-                String state = InputUtil.readString("Enter State: ");
+                String state =
+                        InputUtil.readString(
+                                "Enter State: ");
 
-                ValidationUtil.validateLocationName(state,"State");
+                ValidationUtil.validateLocationName(
+                        state,
+                        "State");
 
-                String country = InputUtil.readString("Enter Country: ");
+                String country =
+                        InputUtil.readString(
+                                "Enter Country: ");
 
-                ValidationUtil.validateLocationName(country, "Country");
+                ValidationUtil.validateLocationName(
+                        country,
+                        "Country");
 
-                String zipCode = InputUtil.readString("Enter Zip Code: ");
+                String zipCode =
+                        InputUtil.readString(
+                                "Enter Zip Code: ");
 
-                ValidationUtil.validateZipCode(zipCode);
+                ValidationUtil.validateZipCode(
+                        zipCode);
 
-                Address address = new Address(IdGenerator.generateId("ADDR"),
-                                houseNumber, street, city, state, country, zipCode);
+                Address address;
 
-                customer.setAddress(address);
+                /*
+                 * If customer already has an address,
+                 * update the existing address.
+                 */
+                if (customer.getAddress() != null) {
 
-                customerDAO.updateCustomer(customer);
+                    address =
+                            customer.getAddress();
+
+                    address.setHouseNumber(
+                            houseNumber);
+
+                    address.setStreet(
+                            street);
+
+                    address.setCity(
+                            city);
+
+                    address.setState(
+                            state);
+
+                    address.setCountry(
+                            country);
+
+                    address.setZipCode(
+                            zipCode);
+
+                    addressDAO.updateAddress(
+                            address);
+
+                }
+
+                /*
+                 * If customer does not have an address,
+                 * create and insert a new address.
+                 */
+                else {
+
+                    address =
+                            new Address(
+                                    IdGenerator.generateId(
+                                            "ADDR"),
+                                    houseNumber,
+                                    street,
+                                    city,
+                                    state,
+                                    country,
+                                    zipCode);
+
+                    addressDAO.insertAddress(
+                            address);
+
+                    customer.setAddress(
+                            address);
+                }
+
+                /*
+                 * Address now exists in the address table,
+                 * so customers.address_id can safely reference it.
+                 */
+                customerDAO.updateCustomer(
+                        customer);
 
                 break;
 
             } catch (ValidationException exception) {
-                DisplayUtil.printMessage(exception.getMessage());
+
+                DisplayUtil.printMessage(
+                        exception.getMessage());
             }
         }
 
-        DisplayUtil.printSuccess("Customer Profile Updated Successfully.");
+        DisplayUtil.printSuccess(
+                "Customer Profile Updated Successfully.");
     }
-    // Deletes Customer Account.
-    public boolean deleteAccount(Customer customer) {
 
-        try {
-            if (customerDAO.findCustomerById(customer.getUserId()) == null) {
-                throw new UserNotFoundException("Customer Account Not Found.");
-            }
-            customerDAO.deleteCustomer(customer.getUserId());
-            return true;
-        } catch (UserNotFoundException exception) {
-            DisplayUtil.printMessage(exception.getMessage());
-            return false;
-        }
-    }
 }

@@ -43,15 +43,14 @@ public class SellerMenuHandler {
      */
     public void showMenu(Seller seller) {
 
-        boolean logout = false;
+        boolean back = false;
 
-        while (!logout) {
+        while (!back) {
 
             showDashboard(seller);
 
             String choice = InputUtil.readString("Enter Choice : ")
-                    .trim()
-                    .toLowerCase();
+                    .trim().toLowerCase();
 
             switch (choice) {
 
@@ -85,25 +84,9 @@ public class SellerMenuHandler {
 
                     break;
 
-                case "delete":
+                case "back":
 
-                    if (sellerService.deleteAccount(seller)) {
-
-                        DisplayUtil.printSuccess(
-                                "Seller Account Deleted Successfully.");
-
-                        logout = true;
-
-                    }
-
-                    break;
-
-
-                case "logout":
-
-                    authenticationService.logout();
-
-                    logout = true;
+                    back = true;
                     break;
 
                 default:
@@ -134,8 +117,7 @@ public class SellerMenuHandler {
         System.out.println("PRODUCTS");
         System.out.println("ORDERS");
         System.out.println("PAYMENTS");
-        System.out.println("DELETE");
-        System.out.println("LOGOUT");
+        System.out.println("BACK");
         System.out.println("==========================================");
 
     }

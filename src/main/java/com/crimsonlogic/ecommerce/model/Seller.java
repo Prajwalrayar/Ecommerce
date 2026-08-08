@@ -108,16 +108,54 @@ public class Seller extends User {
     @Override
     public List<String[]> getTableRows() {
 
-        List<String[]> rows = super.getTableRows();
+        List<String[]> rows = new java.util.ArrayList<>();
+
+        rows.add(new String[]{
+                "User ID",
+                getUserId()
+        });
+
+        rows.add(new String[]{
+                "Name",
+                getUserName()
+        });
+
+        rows.add(new String[]{
+                "Email",
+                getUserEmail()
+        });
+
+        rows.add(new String[]{
+                "Phone Number",
+                getUserPhNo()
+        });
+
+        rows.add(new String[]{
+                "Role",
+                getRole().name()
+        });
 
         rows.add(new String[]{
                 "Shop Name",
                 getShopName()
         });
 
+        String formattedShopAddress =
+                getShopAddress()
+                        + ", "
+                        + getAddress().getStreet()
+                        + ", "
+                        + getAddress().getCity()
+                        + ", "
+                        + getAddress().getZipCode()
+                        + ", "
+                        + getAddress().getState()
+                        + ", "
+                        + getAddress().getCountry();
+
         rows.add(new String[]{
                 "Shop Address",
-                getShopAddress()
+                formattedShopAddress
         });
 
         return rows;

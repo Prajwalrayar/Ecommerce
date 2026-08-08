@@ -254,7 +254,7 @@
     <!-- Find By UTR -->
     <!-- ===================================================== -->
 
-    <select id="findPaymentByTransactionId"
+    <select id="findPaymentByUtr"
             resultMap="PaymentResultMap">
 
         SELECT
