@@ -198,32 +198,29 @@ public class OrderService {
         );
 
     }
-    /**
-     * Cancels Order.
-     *
-     * @param customer Customer
-     */
+    //  Cancels Order.
+
     public void cancelOrder(Customer customer) {
 
         if (!validateCustomerOrders(customer)) {
-
             return;
-
         }
 
-        viewCancelableOrders(customer);
+        List<Order> orders =
+                viewCancelableOrders(customer);
+
+        if (orders == null) {
+            return;
+        }
 
         Order order =
                 getCustomerOrderOrNull(customer);
 
         if (order == null) {
-
             return;
-
         }
 
         cancelExistingOrder(order);
-
     }
 
     /**
@@ -460,13 +457,23 @@ public class OrderService {
 
         else {
 
-            if (paymentMethod
-                    == PaymentMethod.UPI) {
+            if (paymentMethod == PaymentMethod.UPI) {
 
-                upi =
-                        InputUtil.readString(
-                                "Enter UPI ID : ");
+                while (true) {
 
+                    try {
+
+                        upi = InputUtil.readString("Enter UPI ID : ").trim();
+
+                        ValidationUtil.validateUpiId(upi);
+
+                        break;
+
+                    } catch (ValidationException exception) {
+
+                        DisplayUtil.printMessage(exception.getMessage());
+                    }
+                }
             }
 
             transactionId =
@@ -517,65 +524,48 @@ public class OrderService {
 
         if (order == null) {
 
-            return;
-
-        }
-
-        if (order.getOrderStatus()
-                == OrderStatus.DELIVERED) {
-
             DisplayUtil.printMessage(
-                    "Delivered Order Cannot Be Cancelled.");
+                    "Order Not Found.");
 
             return;
-
         }
 
-        if (order.getOrderStatus()
-                == OrderStatus.CANCELLED) {
-
-            DisplayUtil.printMessage(
-                    "Order Already Cancelled.");
-
+        if (!validateCancellation(order)) {
             return;
-
         }
 
-        if (order.getOrderStatus() == OrderStatus.CONFIRMED
-                || order.getOrderStatus() == OrderStatus.PENDING_APPROVAL) {
+        Inventory inventory =
+                inventoryService.findInventoryByProduct(
+                        order.getProduct());
 
-            Inventory inventory =
-                    inventoryService.findInventoryByProduct(order.getProduct());
+        if (inventory != null) {
 
-            updateInventory(inventory, order.getQuantity());
-
+            updateInventory(
+                    inventory,
+                    order.getQuantity());
         }
 
         order.setOrderStatus(
                 OrderStatus.CANCELLED);
 
-        orderDAO.updateOrderStatus(
-                order);
+        orderDAO.updateOrderStatus(order);
 
         Payment payment =
                 getPaymentByOrder(order);
 
         if (payment != null
-                &&
-                payment.getPaymentStatus()
-                        == PaymentStatus.SUCCESS) {
+                && payment.getPaymentStatus()
+                == PaymentStatus.SUCCESS) {
 
             payment.setPaymentStatus(
                     PaymentStatus.REFUNDED);
 
             paymentDAO.updatePaymentStatus(
                     payment);
-
         }
 
         DisplayUtil.printSuccess(
                 "Order Cancelled Successfully.");
-
     }
 
     /**
@@ -1010,14 +1000,25 @@ public class OrderService {
 
     }
 
-    private void viewCancelableOrders(Customer customer) {
+    private List<Order> viewCancelableOrders(Customer customer) {
 
         List<Order> orders =
                 orderDAO.findCancelableOrders(
                         customer.getUserId());
 
-        displayCustomerOrders(orders,"MY ORDERS");
+        if (orders.isEmpty()) {
 
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
+
+            return null;
+        }
+
+        displayCustomerOrders(
+                orders,
+                "MY ORDERS");
+
+        return orders;
     }
 
     /**
@@ -1478,11 +1479,7 @@ public class OrderService {
 
     }
 
-    private void rechargeWallet(
-
-            Customer customer,
-
-            double requiredAmount) {
+    private void rechargeWallet(Customer customer, double requiredAmount) {
 
         System.out.println();
 

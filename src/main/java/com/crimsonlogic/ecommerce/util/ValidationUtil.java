@@ -38,12 +38,16 @@ public class ValidationUtil {
                     "^[A-Z](?=.*[a-z])(?=.*\\d)(?=.*[@#$%^&*!?_+=-])[A-Za-z\\d@#$%^&*!?_+=-]{7,19}$");
 
     // Shop Name Validation.
-
     private static final Pattern SHOP_PATTERN = Pattern.compile("^[A-Za-z0-9&'.,()\\- ]{3,60}$");
 
     // Indian ZIP Code.
-
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[1-9][0-9]{5}$");
+
+    private static final Pattern UPI_ID_PATTERN =
+            Pattern.compile("^(?:[A-Za-z0-9._-]{2,50}|[6-9]\\d{9})@[A-Za-z]{2,20}$");
+
+    private static final Pattern LOCATION_PATTERN =
+            Pattern.compile("^(?=.{3,30}$)[A-Za-z]+(?:[ .'-][A-Za-z]+)*$");
 
     // User Name Validation
     public static void validateUserName(String name)
@@ -177,9 +181,6 @@ public class ValidationUtil {
         }
     }
 
-    private static final Pattern LOCATION_PATTERN =
-            Pattern.compile("^(?=.{3,30}$)[A-Za-z]+(?:[ .'-][A-Za-z]+)*$");
-
     // Validates Category Name.
     public static void validateCategoryName(String categoryName) throws ValidationException {
 
@@ -221,8 +222,7 @@ public class ValidationUtil {
 
     // Validates Seller Address.
 
-    public static void validateSellerAddress(
-            Address address)
+    public static void validateSellerAddress(Address address)
             throws ValidationException {
 
         if (address == null) {
@@ -300,12 +300,7 @@ public class ValidationUtil {
 
     }
 
-    /**
-     * Validates Product Price.
-     *
-     * @param price Product Price
-     * @throws ValidationException if Price is invalid
-     */
+    // Validates Product Price.
     public static void validateProductPrice(double price)
             throws ValidationException {
 
@@ -456,6 +451,18 @@ public class ValidationUtil {
 
         }
 
+    }
+
+    public static void validateUpiId(String upiId)
+            throws ValidationException {
+
+        validateField(upiId, "UPI ID");
+
+        if (!UPI_ID_PATTERN.matcher(upiId.trim()).matches()) {
+
+            throw new ValidationException("Invalid UPI ID. "
+                            + "Example: username@upi or 9876543210@upi");
+        }
     }
 
 

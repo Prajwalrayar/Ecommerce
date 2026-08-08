@@ -72,10 +72,9 @@ public interface PaymentMapper {
      *
      * @param payment Payment
      */
-    void updatePaymentStatus(@Param("payment") Payment payment);
+    void updatePaymentStatus(Payment payment);
 
-    Payment findPaymentByOrder(
-            String orderId);
+    Payment findPaymentByOrder(String orderId);
 
     List<Payment> findPaymentsByCustomerAndKeyword(
 
