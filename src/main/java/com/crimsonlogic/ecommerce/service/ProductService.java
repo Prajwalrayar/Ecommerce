@@ -55,6 +55,7 @@ public class ProductService {
             "Product ID",
 
             "Product Name",
+            "Brand",
 
             "Category",
 
@@ -138,32 +139,104 @@ public class ProductService {
      */
     public void browseProducts() {
 
-        viewAllProducts();
+        boolean back = false;
+
+        while (!back) {
+
+            System.out.println(
+                    "\n==========================================");
+
+            System.out.println(
+                    "          BROWSE PRODUCTS");
+
+            System.out.println(
+                    "==========================================");
+
+            System.out.println("SEARCH");
+            System.out.println("FILTER");
+            System.out.println("SORT");
+            System.out.println("BACK");
+
+            System.out.println(
+                    "==========================================");
+
+            String choice =
+                    InputUtil.readString(
+                                    "Enter Choice : ")
+                            .trim()
+                            .toLowerCase();
+
+            switch (choice) {
+
+                case "search":
+                    searchProduct();
+
+                    break;
+
+                case "filter":
+
+                    filterProductsByCategory();
+
+                    break;
+
+                case "sort":
+                    sortProductsByPrice();
+
+                    break;
+
+                case "back":
+
+                    back = true;
+
+                    break;
+
+                default:
+
+                    DisplayUtil.printInvalidChoice();
+            }
+        }
 
     }
-
     /**
-     * Searches Product.
+     * Searches Products by Product Name.
      */
     public void searchProduct() {
 
         if (!validateProductsAvailable()) {
+            return;
+        }
+
+        String keyword = InputUtil.readString("Enter Product Name : ").trim();
+
+        if (keyword.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "Product Name Cannot Be Empty.");
 
             return;
-
         }
 
-        viewAllProducts();
+        List<Product> products =
+                productDAO.findAllProducts()
+                        .stream()
+                        .filter(product ->
+                                product.getProductName()
+                                        .toLowerCase()
+                                        .contains(
+                                                keyword.toLowerCase()))
+                        .toList();
 
-        Product product =
-                getProductOrNull();
+        if (products.isEmpty()) {
 
-        if (product != null) {
+            DisplayUtil.printMessage(
+                    "Product Not Found.");
 
-            displayProduct(product);
-
+            return;
         }
 
+        displayProducts(
+                products,
+                "SEARCH RESULT");
     }
 
     /**
@@ -334,6 +407,8 @@ public class ProductService {
 
                 }
 
+                String brand = InputUtil.readString("Enter Product brand: ");
+
                 String description =
                         InputUtil.readString(
                                 "Enter Product Description : ");
@@ -363,6 +438,7 @@ public class ProductService {
                                 generateProductId(),
 
                                 productName,
+                                brand,
 
                                 description,
 
@@ -458,6 +534,7 @@ public class ProductService {
                             product.getProductId(),
 
                             product.getProductName(),
+                            product.getBrand(),
 
                             product.getCategory()
                                     .getCategoryName(),
@@ -730,67 +807,46 @@ public class ProductService {
      *
      * @param product Product
      */
-    private void updateExistingProduct(
-            Product product) {
+    private void updateExistingProduct(Product product) {
 
         while (true) {
-
             try {
 
-                String productName =
-                        InputUtil.readOptionalString(
-                                "Enter Product Name (Press Enter to Skip): ");
+                String productName = InputUtil.readString("Enter Product Name: ");
 
                 if (productName != null) {
 
-                    ValidationUtil.validateProductName(
-                            productName);
+                    ValidationUtil.validateProductName(productName);
 
-                    product.setProductName(
-                            productName);
+                    product.setProductName(productName);
 
                 }
 
-                String description =
-                        InputUtil.readOptionalString(
-                                "Enter Product Description (Press Enter to Skip): ");
+                String description = InputUtil.readOptionalString("Enter Product Description: ");
 
                 if (description != null) {
 
-                    ValidationUtil.validateProductDescription(
-                            description);
+                    ValidationUtil.validateProductDescription(description);
 
-                    product.setProductDescription(
-                            description);
+                    product.setProductDescription(description);
 
                 }
 
-                Double price =
-                        InputUtil.readOptionalDouble(
-                                "Enter Product Price (Press Enter to Skip): ");
+                Double price = InputUtil.readOptionalDouble("Enter Product Price: ");
 
                 if (price != null) {
-
-                    ValidationUtil.validateProductPrice(
-                            price);
-
-                    product.setProductPrice(
-                            price);
+                    ValidationUtil.validateProductPrice(price);
+                    product.setProductPrice(price);
 
                 }
 
                 productDAO.updateProduct(product);
 
-                DisplayUtil.printSuccess(
-                        "Product Updated Successfully.");
-
+                DisplayUtil.printSuccess("Product Updated Successfully.");
                 break;
 
             } catch (ValidationException exception) {
-
-                DisplayUtil.printMessage(
-                        exception.getMessage());
-
+                DisplayUtil.printMessage(exception.getMessage());
             }
 
         }

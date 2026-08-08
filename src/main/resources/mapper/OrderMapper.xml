@@ -53,24 +53,9 @@
         <!-- Product -->
 
         <association property="product"
-                     javaType="com.crimsonlogic.ecommerce.model.Product">
-
-            <id property="productId"
-                column="product_id"/>
-
-            <result property="productName"
-                    column="product_name"/>
-
-            <result property="productDescription"
-                    column="product_description"/>
-
-            <result property="productPrice"
-                    column="product_price"/>
-
-            <result property="productStatus"
-                    column="product_status"/>
-
-        </association>
+                     javaType="com.crimsonlogic.ecommerce.model.Product"
+                     select="com.crimsonlogic.ecommerce.mapper.ProductMapper.findProductById"
+                     column="product_id"/>
 
     </resultMap>
 

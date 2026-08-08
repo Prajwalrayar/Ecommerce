@@ -30,6 +30,8 @@ public class OrderService {
      */
     private final InventoryService inventoryService;
 
+    private PaymentService paymentService;
+
     /**
      * Cart DAO.
      */
@@ -112,6 +114,7 @@ public class OrderService {
 
         this.paymentDAO =
                 new PaymentDAO();
+        this.paymentService = new PaymentService();
 
     }
 
@@ -477,7 +480,7 @@ public class OrderService {
             }
 
             transactionId =
-                    IdGenerator.generateId("TXN");
+                    paymentService.generateUtrNumber();
 
             paymentStatus =
                     PaymentStatus.SUCCESS;
@@ -892,6 +895,90 @@ public class OrderService {
 
         return true;
 
+    }
+
+    public void cancelSellerOrder(Seller seller) {
+
+        List<Order> orders =
+                orderDAO.findOrdersBySeller(seller.getUserId());
+
+        List<Order> pendingOrders =
+                orders.stream()
+                        .filter(order ->
+                                order.getOrderStatus()
+                                        == OrderStatus.PENDING_APPROVAL)
+                        .toList();
+
+        if (pendingOrders.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Orders Found.");
+
+            return;
+        }
+
+        displaySellerOrders(
+                pendingOrders,
+                "MY ORDERS");
+
+        String trackingNumber =
+                InputUtil.readString(
+                                "Enter Tracking Number : ")
+                        .trim()
+                        .toUpperCase();
+
+        Order order =
+                pendingOrders.stream()
+                        .filter(item ->
+                                item.getOrderId()
+                                        .equals(trackingNumber))
+                        .findFirst()
+                        .orElse(null);
+
+        if (order == null) {
+
+            DisplayUtil.printMessage(
+                    "Order Not Found.");
+
+            return;
+        }
+
+        /*
+         * Restore stock because stock was
+         * reduced when the order was placed.
+         */
+        Inventory inventory =
+                inventoryService.findInventoryByProduct(
+                        order.getProduct());
+
+        if (inventory != null) {
+
+            updateInventory(
+                    inventory,
+                    order.getQuantity());
+        }
+
+        order.setOrderStatus(
+                OrderStatus.CANCELLED);
+
+        orderDAO.updateOrderStatus(order);
+
+        Payment payment =
+                getPaymentByOrder(order);
+
+        if (payment != null
+                && payment.getPaymentStatus()
+                == PaymentStatus.SUCCESS) {
+
+            payment.setPaymentStatus(
+                    PaymentStatus.REFUNDED);
+
+            paymentDAO.updatePaymentStatus(
+                    payment);
+        }
+
+        DisplayUtil.printSuccess(
+                "Order Cancelled Successfully.");
     }
 
     /**
@@ -1615,9 +1702,11 @@ public class OrderService {
                         order.getCustomer()
                                 .getUserName(),
 
-                        order.getProduct()
+                        order.getProduct().getSeller() != null
+                                ? order.getProduct()
                                 .getSeller()
-                                .getShopName(),
+                                .getShopName()
+                                : "N/A",
 
                         order.getProduct()
                                 .getProductName(),

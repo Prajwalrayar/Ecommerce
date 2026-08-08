@@ -97,19 +97,6 @@ public class CustomerMenuHandler {
 
                     break;
 
-                case "delete":
-
-                    if (customerService.deleteAccount(customer)) {
-
-                        DisplayUtil.printSuccess(
-                                "Customer Account Deleted Successfully.");
-
-                        logout = true;
-
-                    }
-
-                    break;
-
                 case "logout":
 
                     authenticationService.logout();
@@ -147,7 +134,6 @@ public class CustomerMenuHandler {
         System.out.println("CART");
         System.out.println("ORDERS");
         System.out.println("PAYMENTS");
-        System.out.println("DELETE");
         System.out.println("LOGOUT");
         System.out.println("==========================================");
 
