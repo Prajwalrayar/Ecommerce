@@ -230,4 +230,24 @@ public class ProductDAO {
 
     }
 
+    public Double findAverageRating(String productId) {
+
+        try (SqlSession session = MyBatisUtil.getFactory().openSession()) {
+
+            ProductMapper mapper = session.getMapper(ProductMapper.class);
+
+            return mapper.findAverageRating(productId);
+        }
+    }
+
+    public int countReviews(String productId) {
+
+        try (SqlSession session = MyBatisUtil.getFactory().openSession()) {
+
+            ProductMapper mapper = session.getMapper(ProductMapper.class);
+
+            return mapper.countReviews(productId);
+        }
+    }
+
 }

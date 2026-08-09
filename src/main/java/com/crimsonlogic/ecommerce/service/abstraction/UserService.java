@@ -105,60 +105,73 @@ public abstract class UserService<T extends User> {
      *
      * @param user Logged-in User
      */
-    public void changePassword(T user) {
+    public String changePassword(T user) {
 
         System.out.println("\n========== CHANGE PASSWORD ==========");
 
-        while (true) {
+        String currentPassword =
+                InputUtil.readString(
+                        "Enter Current Password : ");
 
-            String currentPassword =
-                    InputUtil.readString("Enter Current Password : ");
+        if (!PasswordUtil.verifyPassword(
+                currentPassword,
+                user.getUserPassword())) {
 
-            if (!PasswordUtil.verifyPassword(
-                    currentPassword, user.getUserPassword())) {
+            DisplayUtil.printMessage(
+                    "Current Password is incorrect.");
 
-                DisplayUtil.printMessage(
-                        "Current Password is incorrect.");
-
-                continue;
-
-            }
-
-            try {
-
-                String newPassword =
-                        InputUtil.readString("Enter New Password : ");
-
-                ValidationUtil.validatePassword(newPassword);
-
-                String confirmPassword =
-                        InputUtil.readString("Confirm Password : ");
-
-                if (!newPassword.equals(confirmPassword)) {
-
-                    DisplayUtil.printMessage(
-                            "Passwords do not match.");
-
-                    continue;
-
-                }
-
-                user.setUserPassword(PasswordUtil.encryptPassword(
-                                newPassword));
-
-                DisplayUtil.printSuccess(
-                        "Password Changed Successfully.");
-
-                break;
-
-            } catch (ValidationException exception) {
-
-                DisplayUtil.printMessage(exception.getMessage());
-
-            }
-
+            return null;
         }
 
+        try {
+
+            String newPassword =
+                    InputUtil.readString(
+                            "Enter New Password : ");
+
+            ValidationUtil.validatePassword(
+                    newPassword);
+
+            // New password cannot be same as current password
+            if (PasswordUtil.verifyPassword(
+                    newPassword,
+                    user.getUserPassword())) {
+
+                DisplayUtil.printMessage(
+                        "New Password cannot be the same as Current Password.");
+
+                return null;
+            }
+
+            String confirmPassword =
+                    InputUtil.readString(
+                            "Confirm Password : ");
+
+            // Wrong confirmation -> return to menu
+            if (!newPassword.equals(confirmPassword)) {
+
+                DisplayUtil.printMessage(
+                        "Passwords do not match.");
+
+                return null;
+            }
+
+            String encryptedPassword =
+                    PasswordUtil.encryptPassword(
+                            newPassword);
+
+            user.setUserPassword(
+                    encryptedPassword);
+
+            return encryptedPassword;
+
+        } catch (ValidationException exception) {
+
+            DisplayUtil.printMessage(
+                    exception.getMessage());
+
+            return null;
+        }
     }
 
 }

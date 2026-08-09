@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.crimsonlogic.ecommerce.mapper.ReviewMapper">
+
+    <resultMap id="ReviewResultMap"
+               type="com.crimsonlogic.ecommerce.model.Review">
+
+        <id property="reviewId"
+            column="review_id"/>
+
+        <result property="rating"
+                column="rating"/>
+
+        <result property="reviewText"
+                column="review_text"/>
+
+        <result property="reviewDate"
+                column="review_date"/>
+
+    </resultMap>
+
+
+    <insert id="insertReview">
+
+        INSERT INTO reviews(
+        review_id,
+        order_id,
+        product_id,
+        customer_id,
+        rating,
+        review_text,
+        review_date
+        )
+
+        VALUES(
+        #{reviewId},
+        #{order.orderId},
+        #{product.productId},
+        #{customer.userId},
+        #{rating},
+        #{reviewText},
+        #{reviewDate}
+        )
+
+    </insert>
+
+
+    <select id="findReviewByCustomerAndOrder"
+            resultMap="ReviewResultMap">
+
+        SELECT *
+
+        FROM reviews
+
+        WHERE customer_id = #{customerId}
+
+        AND order_id = #{orderId}
+
+    </select>
+
+</mapper>

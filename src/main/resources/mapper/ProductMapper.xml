@@ -107,6 +107,25 @@
 
     </resultMap>
 
+    <sql id="ProductRatingColumns">
+
+        COALESCE(
+        (
+        SELECT AVG(r.rating)
+        FROM reviews r
+        WHERE r.product_id = p.product_id
+        ),
+        0
+        ) AS average_rating,
+
+        (
+        SELECT COUNT(r.review_id)
+        FROM reviews r
+        WHERE r.product_id = p.product_id
+        ) AS review_count,
+
+    </sql>
+
     <!-- ===================================================== -->
     <!-- Insert Product -->
     <!-- ===================================================== -->
@@ -203,6 +222,7 @@
         SELECT
 
         p.*,
+        <include refid="ProductRatingColumns"/>
 
         c.category_name,
         c.category_description,
@@ -251,6 +271,7 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
         c.category_name,
         c.category_description,
 
@@ -298,6 +319,8 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
+
         c.category_name,
         c.category_description,
 
@@ -319,15 +342,12 @@
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         ORDER BY p.product_name
@@ -344,6 +364,7 @@
         SELECT
 
         p.*,
+        <include refid="ProductRatingColumns"/>
 
         c.category_name,
         c.category_description,
@@ -394,6 +415,7 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
         c.category_name,
         c.category_description,
 
@@ -490,6 +512,7 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
         c.category_name,
         c.category_description,
 
@@ -537,6 +560,7 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
         c.category_name,
         c.category_description,
 
@@ -590,5 +614,23 @@
         WHERE product_id=#{productId}
 
     </update>
+
+    <select id="findAverageRating"
+            resultType="double">
+
+        SELECT COALESCE(AVG(rating), 0)
+        FROM reviews
+        WHERE product_id = #{productId}
+
+    </select>
+
+    <select id="countReviews"
+            resultType="int">
+
+        SELECT COUNT(*)
+        FROM reviews
+        WHERE product_id = #{productId}
+
+    </select>
 
 </mapper>

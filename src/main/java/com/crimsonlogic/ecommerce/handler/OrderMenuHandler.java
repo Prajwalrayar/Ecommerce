@@ -115,6 +115,12 @@ public class OrderMenuHandler {
 
                     break;
 
+                case "update status":
+
+                    orderService.updateOrderStatus(seller);
+
+                    break;
+
                 case "approve":
                 case "reject":
                 case "order approval":
@@ -181,7 +187,7 @@ public class OrderMenuHandler {
     private void showDashboard(){
 
         System.out.println("ORDER MENU");
-
+        System.out.println("------------------------------------");
         System.out.println("PLACE");
         System.out.println("VIEW");
         System.out.println("SEARCH");
@@ -204,6 +210,7 @@ public class OrderMenuHandler {
         System.out.println("SEARCH");
         System.out.println("TRACK");
         System.out.println("ORDER APPROVAL");
+        System.out.println("UPDATE STATUS");
         System.out.println("BACK");
 
         System.out.println(

@@ -42,6 +42,7 @@
         <mapper resource="mapper/OrderMapper.xml"/>
         <mapper resource="mapper/PaymentMapper.xml"/>
         <mapper resource="mapper/AddressMapper.xml"/>
+        <mapper resource="mapper/ReviewMapper.xml"/>
 
     </mappers>
 

@@ -157,4 +157,24 @@ public class CustomerService extends UserService<Customer> {
                 "Customer Profile Updated Successfully.");
     }
 
+    public String changePassword(Customer customer) {
+
+        String encryptedPassword =
+                super.changePassword(customer);
+
+        // Password change was cancelled/failed
+        if (encryptedPassword == null) {
+            return null;
+        }
+
+        customerDAO.updatePassword(
+                customer.getUserId(),
+                encryptedPassword);
+
+        DisplayUtil.printSuccess(
+                "Password Changed Successfully.");
+
+        return encryptedPassword;
+    }
+
 }

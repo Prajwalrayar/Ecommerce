@@ -47,6 +47,22 @@ public class SellerDAO {
 
     }
 
+    public void updatePassword(String userId, String userPassword) {
+
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
+
+            SellerMapper mapper =
+                    session.getMapper(SellerMapper.class);
+
+            mapper.updatePassword(
+                    userId,
+                    userPassword);
+
+            session.commit();
+        }
+    }
+
     /**
      * Deletes Seller.
      *

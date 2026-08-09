@@ -47,6 +47,24 @@ public class CustomerDAO {
 
     }
 
+    public void updatePassword(
+            String userId,
+            String userPassword) {
+
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
+
+            CustomerMapper mapper =
+                    session.getMapper(CustomerMapper.class);
+
+            mapper.updatePassword(
+                    userId,
+                    userPassword);
+
+            session.commit();
+        }
+    }
+
     /**
      * Updates Wallet Balance.
      *

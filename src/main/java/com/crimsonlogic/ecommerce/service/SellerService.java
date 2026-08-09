@@ -76,12 +76,27 @@ public class SellerService extends UserService<Seller> {
 
     }
 
-    /**
-     * Deletes Seller Account.
-     *
-     * @param seller Logged-in Seller
-     * @return true if deleted successfully
-     */
+    public String changePassword(Seller seller) {
+
+        String encryptedPassword =
+                super.changePassword(seller);
+
+        // Password change was cancelled/failed
+        if (encryptedPassword == null) {
+            return null;
+        }
+
+        sellerDAO.updatePassword(
+                seller.getUserId(),
+                encryptedPassword);
+
+        DisplayUtil.printSuccess(
+                "Password Changed Successfully.");
+
+        return encryptedPassword;
+    }
+
+
     public boolean deleteAccount(
             Seller seller) {
 
