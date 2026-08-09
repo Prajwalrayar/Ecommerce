@@ -6,6 +6,7 @@
 
 <mapper namespace="com.crimsonlogic.ecommerce.mapper.ProductMapper">
 
+
     <!-- ===================================================== -->
     <!-- Result Map -->
     <!-- ===================================================== -->
@@ -13,7 +14,9 @@
     <resultMap id="ProductResultMap"
                type="com.crimsonlogic.ecommerce.model.Product">
 
+        <!-- ================================================= -->
         <!-- Product -->
+        <!-- ================================================= -->
 
         <id property="productId"
             column="product_id"/>
@@ -30,10 +33,21 @@
         <result property="productPrice"
                 column="product_price"/>
 
+        <!-- Product Rating -->
+        <result property="rating"
+                column="average_rating"/>
+
+        <!-- Number of Reviews -->
+        <result property="reviewCount"
+                column="review_count"/>
+
         <result property="productStatus"
                 column="product_status"/>
 
+
+        <!-- ================================================= -->
         <!-- Category -->
+        <!-- ================================================= -->
 
         <association property="category"
                      javaType="com.crimsonlogic.ecommerce.model.Category">
@@ -49,7 +63,10 @@
 
         </association>
 
+
+        <!-- ================================================= -->
         <!-- Seller -->
+        <!-- ================================================= -->
 
         <association property="seller"
                      javaType="com.crimsonlogic.ecommerce.model.Seller">
@@ -75,7 +92,10 @@
             <result property="shopAddress"
                     column="shop_address"/>
 
+
+            <!-- ================================================= -->
             <!-- Seller Address -->
+            <!-- ================================================= -->
 
             <association property="address"
                          javaType="com.crimsonlogic.ecommerce.model.Address">
@@ -107,6 +127,11 @@
 
     </resultMap>
 
+
+    <!-- ===================================================== -->
+    <!-- Reusable Product Rating Columns -->
+    <!-- ===================================================== -->
+
     <sql id="ProductRatingColumns">
 
         COALESCE(
@@ -126,6 +151,7 @@
 
     </sql>
 
+
     <!-- ===================================================== -->
     <!-- Insert Product -->
     <!-- ===================================================== -->
@@ -139,6 +165,7 @@
         product_name,
 
         brand,
+
         product_description,
 
         product_price,
@@ -156,6 +183,7 @@
         #{productId},
 
         #{productName},
+
         #{brand},
 
         #{productDescription},
@@ -171,6 +199,7 @@
         )
 
     </insert>
+
 
     <!-- ===================================================== -->
     <!-- Update Product -->
@@ -198,6 +227,7 @@
 
     </update>
 
+
     <!-- ===================================================== -->
     <!-- Delete Product -->
     <!-- ===================================================== -->
@@ -205,12 +235,12 @@
     <delete id="deleteProduct">
 
         DELETE
-
         FROM products
 
         WHERE product_id = #{productId}
 
     </delete>
+
 
     <!-- ===================================================== -->
     <!-- Find Product By ID -->
@@ -222,43 +252,54 @@
         SELECT
 
         p.*,
+
         <include refid="ProductRatingColumns"/>
 
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         WHERE p.product_id = #{productId}
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find Product By Name -->
@@ -272,41 +313,52 @@
         p.*,
 
         <include refid="ProductRatingColumns"/>
+
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         WHERE p.product_name = #{productName}
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find All Products -->
@@ -322,21 +374,33 @@
         <include refid="ProductRatingColumns"/>
 
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
@@ -353,6 +417,7 @@
         ORDER BY p.product_name
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find Products By Seller -->
@@ -364,38 +429,48 @@
         SELECT
 
         p.*,
+
         <include refid="ProductRatingColumns"/>
 
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         WHERE p.user_id = #{sellerId}
@@ -403,6 +478,7 @@
         ORDER BY p.product_name
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find Products By Category -->
@@ -416,36 +492,46 @@
         p.*,
 
         <include refid="ProductRatingColumns"/>
+
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         WHERE p.category_id = #{categoryId}
@@ -453,6 +539,7 @@
         ORDER BY p.product_name
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find Products By Status -->
@@ -465,41 +552,53 @@
 
         p.*,
 
+        <include refid="ProductRatingColumns"/>
+
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
         WHERE p.product_status = #{productStatus}
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Find Available Products -->
@@ -513,44 +612,55 @@
         p.*,
 
         <include refid="ProductRatingColumns"/>
+
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
         ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
         ON p.user_id = s.user_id
 
         LEFT JOIN address a
-
         ON s.address_id = a.address_id
 
-        WHERE p.product_status='AVAILABLE'
+        WHERE p.product_status = 'AVAILABLE'
 
     </select>
 
+
     <!-- ===================================================== -->
-    <!-- Find Product By Id And Seller -->
+    <!-- Find Product By ID And Seller -->
     <!-- ===================================================== -->
 
     <select id="findProductByIdAndSeller"
@@ -561,43 +671,54 @@
         p.*,
 
         <include refid="ProductRatingColumns"/>
+
         c.category_name,
+
         c.category_description,
 
         s.user_name,
+
         s.user_email,
+
         s.user_phone,
+
         s.user_password,
+
         s.shop_name,
+
         s.shop_address,
+
         s.address_id,
 
         a.house_number,
+
         a.street,
+
         a.city,
+
         a.state,
+
         a.country,
+
         a.zip_code
 
         FROM products p
 
         INNER JOIN categories c
-
-        ON p.category_id=c.category_id
+        ON p.category_id = c.category_id
 
         INNER JOIN sellers s
-
-        ON p.user_id=s.user_id
+        ON p.user_id = s.user_id
 
         LEFT JOIN address a
+        ON s.address_id = a.address_id
 
-        ON s.address_id=a.address_id
+        WHERE p.product_id = #{productId}
 
-        WHERE p.product_id=#{productId}
-
-        AND p.user_id=#{sellerId}
+        AND p.user_id = #{sellerId}
 
     </select>
+
 
     <!-- ===================================================== -->
     <!-- Update Product Status -->
@@ -609,28 +730,45 @@
 
         SET
 
-        product_status=#{productStatus}
+        product_status = #{productStatus}
 
-        WHERE product_id=#{productId}
+        WHERE product_id = #{productId}
 
     </update>
+
+
+    <!-- ===================================================== -->
+    <!-- Find Average Rating -->
+    <!-- ===================================================== -->
 
     <select id="findAverageRating"
             resultType="double">
 
-        SELECT COALESCE(AVG(rating), 0)
+        SELECT
+        COALESCE(AVG(rating), 0)
+
         FROM reviews
+
         WHERE product_id = #{productId}
 
     </select>
+
+
+    <!-- ===================================================== -->
+    <!-- Count Reviews -->
+    <!-- ===================================================== -->
 
     <select id="countReviews"
             resultType="int">
 
-        SELECT COUNT(*)
+        SELECT
+        COUNT(*)
+
         FROM reviews
+
         WHERE product_id = #{productId}
 
     </select>
+
 
 </mapper>

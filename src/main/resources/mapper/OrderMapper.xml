@@ -28,6 +28,9 @@
         <result property="orderDate"
                 column="order_date"/>
 
+        <result property="deliveredDate"
+                column="delivered_date"/>
+
         <!-- Customer -->
 
         <association property="customer"
@@ -47,6 +50,8 @@
 
             <result property="walletBalance"
                     column="wallet_balance"/>
+
+
 
         </association>
 
