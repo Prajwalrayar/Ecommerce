@@ -45,6 +45,7 @@ public class Order {
      * Order Date and Time.
      */
     private LocalDateTime orderDate;
+    private LocalDateTime deliveredDate;
 
     public Order() {
 
@@ -234,6 +235,15 @@ public class Order {
 
         this.orderDate = orderDate;
 
+    }
+
+    public LocalDateTime getDeliveredDate() {
+        return deliveredDate;
+    }
+    public void setDeliveredDate(
+            LocalDateTime deliveredDate) {
+
+        this.deliveredDate = deliveredDate;
     }
     /**
      * Returns Order Details.

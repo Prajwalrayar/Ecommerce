@@ -1,6 +1,7 @@
 package com.crimsonlogic.ecommerce.dao;
 
 import com.crimsonlogic.ecommerce.config.MyBatisUtil;
+import com.crimsonlogic.ecommerce.enums.PaymentStatus;
 import com.crimsonlogic.ecommerce.mapper.PaymentMapper;
 import com.crimsonlogic.ecommerce.model.Payment;
 import org.apache.ibatis.session.SqlSession;
@@ -137,6 +138,26 @@ public class PaymentDAO {
 
         }
 
+    }
+
+    /**
+     * Returns Payments by Payment Status.
+     *
+     * @param paymentStatus Payment Status
+     * @return Payment List
+     */
+    public List<Payment> findPaymentsByStatus(
+            PaymentStatus paymentStatus) {
+
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
+
+            PaymentMapper mapper =
+                    session.getMapper(PaymentMapper.class);
+
+            return mapper.findPaymentsByStatus(
+                    paymentStatus);
+        }
     }
 
     /**

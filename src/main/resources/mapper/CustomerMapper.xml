@@ -129,6 +129,16 @@
 
     </update>
 
+    <update id="updatePassword">
+
+        UPDATE customers
+
+        SET user_password = #{userPassword}
+
+        WHERE user_id = #{userId}
+
+    </update>
+
     <!-- ===================================================== -->
     <!-- Update Wallet -->
     <!-- ===================================================== -->

@@ -33,6 +33,10 @@ public class Product {
      */
     private double productPrice;
 
+    private double rating;
+
+    private int reviewCount;
+
     /**
      * Product Category.
      */
@@ -110,6 +114,22 @@ public class Product {
 
     public double getProductPrice() {
         return productPrice;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
     }
 
     public void setProductPrice(double productPrice) {

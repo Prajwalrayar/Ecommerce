@@ -1,6 +1,7 @@
 package com.crimsonlogic.ecommerce.mapper;
 
 import com.crimsonlogic.ecommerce.model.Seller;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -20,6 +21,9 @@ public interface SellerMapper {
      */
     void updateSeller(Seller seller);
 
+    void updatePassword(
+            @Param("userId") String userId,
+            @Param("userPassword") String userPassword);
     /**
      * Deletes Seller.
      *

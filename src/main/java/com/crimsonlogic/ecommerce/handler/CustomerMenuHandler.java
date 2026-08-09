@@ -1,10 +1,7 @@
 package com.crimsonlogic.ecommerce.handler;
 
 import com.crimsonlogic.ecommerce.model.Customer;
-import com.crimsonlogic.ecommerce.service.AuthenticationService;
-import com.crimsonlogic.ecommerce.service.CartService;
-import com.crimsonlogic.ecommerce.service.CustomerService;
-import com.crimsonlogic.ecommerce.service.PaymentService;
+import com.crimsonlogic.ecommerce.service.*;
 import com.crimsonlogic.ecommerce.util.DisplayUtil;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 
@@ -22,6 +19,8 @@ public class CustomerMenuHandler {
     private final CartMenuHandler cartMenuHandler;
     private final OrderMenuHandler orderMenuHandler;
     private final PaymentMenuHandler paymentMenuHandler;
+
+    private ReviewService reviewService;
 
     /**
      * Parameterized Constructor.
@@ -41,6 +40,7 @@ public class CustomerMenuHandler {
         this.orderMenuHandler = new OrderMenuHandler();
 
         this.paymentMenuHandler = new PaymentMenuHandler();
+        this.reviewService = new ReviewService();
     }
 
     /**
@@ -97,6 +97,16 @@ public class CustomerMenuHandler {
 
                     break;
 
+                case "wallet":
+                    showWallet(customer);
+
+                    break;
+                case "review":
+
+                    reviewService.addReview(customer);
+
+                    break;
+
                 case "logout":
 
                     authenticationService.logout();
@@ -133,6 +143,8 @@ public class CustomerMenuHandler {
         System.out.println("BROWSE PRODUCTS");
         System.out.println("CART");
         System.out.println("ORDERS");
+        System.out.println("WALLET");
+        System.out.println("REVIEW");
         System.out.println("PAYMENTS");
         System.out.println("LOGOUT");
         System.out.println("==========================================");
@@ -155,6 +167,22 @@ public class CustomerMenuHandler {
                 "CUSTOMER PROFILE",
                 headers,
                 customer.getTableRows());
+
+    }
+
+    /**
+     * Displays Customer Wallet Balance.
+     *
+     * @param customer Logged-in Customer
+     */
+    private void showWallet(Customer customer) {
+
+        System.out.println("\n-----------------------------------------");
+        System.out.println("     CUSTOMER WALLET");
+        System.out.println("-------------------------------------------");
+
+        System.out.println("Wallet Balance : ₹"
+                + String.format("%.2f", customer.getWalletBalance()));
 
     }
 

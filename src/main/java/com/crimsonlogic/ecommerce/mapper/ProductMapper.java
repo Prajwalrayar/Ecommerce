@@ -107,4 +107,10 @@ public interface ProductMapper {
 
     );
 
+    Double findAverageRating(
+            @Param("productId") String productId);
+
+    int countReviews(
+            @Param("productId") String productId);
+
 }

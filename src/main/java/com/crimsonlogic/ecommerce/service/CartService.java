@@ -56,23 +56,53 @@ public class CartService {
     public void addToCart(Customer customer) {
 
         if (!validateAvailableProducts()) {
-
             return;
-
         }
 
-        productService.browseProducts();
+        List<Product> products =
+                productService.getAvailableProductsForCart();
 
-        Product product = getProductOrNull();
+        if (products.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Products Available.");
+
+            return;
+        }
+
+        displayProductsForCart(products);
+
+        String productName =
+                InputUtil.readString(
+                                "Enter Product Name : ")
+                        .trim();
+
+        if (productName.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "Product Name Cannot Be Empty.");
+
+            return;
+        }
+
+        Product product =
+                products.stream()
+                        .filter(currentProduct ->
+                                currentProduct.getProductName()
+                                        .equalsIgnoreCase(
+                                                productName))
+                        .findFirst()
+                        .orElse(null);
 
         if (product == null) {
 
-            return;
+            DisplayUtil.printMessage(
+                    "Product Not Found.");
 
+            return;
         }
 
         createCart(customer, product);
-
     }
 
     /**
@@ -715,6 +745,74 @@ public class CartService {
 
         return cartId;
 
+    }
+
+    private void displayProductsForCart(
+            List<Product> products) {
+
+        String[] headers = {
+
+                "Product ID",
+                "Product Name",
+                "Brand",
+                "Category",
+                "Price (₹)",
+                "Stock",
+                "Seller",
+                "Rating",
+                "Status"
+        };
+
+        List<String[]> rows =
+                products.stream()
+                        .map(product -> {
+
+                            Inventory inventory =
+                                    inventoryService
+                                            .findInventoryByProduct(
+                                                    product);
+
+                            int stock =
+                                    inventory != null
+                                            ? inventory.getQuantity()
+                                            : 0;
+
+                            return new String[]{
+
+                                    product.getProductId(),
+
+                                    product.getProductName(),
+
+                                    product.getBrand(),
+
+                                    product.getCategory()
+                                            .getCategoryName(),
+
+                                    String.format(
+                                            "%.2f",
+                                            product.getProductPrice()),
+
+                                    String.valueOf(stock),
+
+                                    product.getSeller()
+                                            .getShopName(),
+
+                                    String.format(
+                                            "%.1f (%d)",
+                                            product.getRating(),
+                                            product.getReviewCount()),
+
+                                    product.getProductStatus()
+                                            .name()
+                            };
+
+                        })
+                        .toList();
+
+        DisplayUtil.printTable(
+                "AVAILABLE PRODUCTS",
+                headers,
+                rows);
     }
 
 }

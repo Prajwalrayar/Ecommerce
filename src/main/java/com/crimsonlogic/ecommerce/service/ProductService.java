@@ -53,18 +53,13 @@ public class ProductService {
     private static final String[] PRODUCT_HEADERS = {
 
             "Product ID",
-
             "Product Name",
             "Brand",
-
             "Category",
-
             "Price (₹)",
-
             "Stock",
-
             "Seller",
-
+            "Rating",
             "Status"
 
     };
@@ -137,39 +132,34 @@ public class ProductService {
     /**
      * Displays Products for Customers.
      */
-    public void browseProducts() {
+    public Product browseProducts() {
 
-        boolean back = false;
+        while (true) {
 
-        while (!back) {
-
-            System.out.println(
-                    "\n==========================================");
-
-            System.out.println(
-                    "          BROWSE PRODUCTS");
-
-            System.out.println(
-                    "==========================================");
-
+            System.out.println("\n==========================================");
+            System.out.println("          BROWSE PRODUCTS");
+            System.out.println("==========================================");
             System.out.println("SEARCH");
             System.out.println("FILTER");
             System.out.println("SORT");
             System.out.println("BACK");
-
-            System.out.println(
-                    "==========================================");
+            System.out.println("==========================================");
 
             String choice =
-                    InputUtil.readString(
-                                    "Enter Choice : ")
+                    InputUtil.readString("Enter Choice : ")
                             .trim()
                             .toLowerCase();
 
             switch (choice) {
 
                 case "search":
-                    searchProduct();
+
+                    Product searchedProduct =
+                            searchProductForCart();
+
+                    if (searchedProduct != null) {
+                        return searchedProduct;
+                    }
 
                     break;
 
@@ -180,22 +170,20 @@ public class ProductService {
                     break;
 
                 case "sort":
+
                     sortProductsByPrice();
 
                     break;
 
                 case "back":
 
-                    back = true;
-
-                    break;
+                    return null;
 
                 default:
 
                     DisplayUtil.printInvalidChoice();
             }
         }
-
     }
     /**
      * Searches Products by Product Name.
@@ -547,6 +535,10 @@ public class ProductService {
 
                             product.getSeller()
                                     .getShopName(),
+                            String.format(
+                                    "%.1f (%d)",
+                                    product.getRating(),
+                                    product.getReviewCount()),
 
                             product.getProductStatus()
                                     .name()
@@ -666,6 +658,11 @@ public class ProductService {
 
         );
 
+    }
+
+    public List<Product> getAvailableProductsForCart() {
+
+        return productDAO.findAvailableProducts();
     }
 
     /**
@@ -867,6 +864,73 @@ public class ProductService {
         DisplayUtil.printSuccess(
                 "Product Deleted Successfully.");
 
+    }
+
+    public Product searchProductForCart() {
+
+        if (!validateProductsAvailable()) {
+            return null;
+        }
+
+        String keyword =
+                InputUtil.readString(
+                                "Enter Product Name : ")
+                        .trim();
+
+        if (keyword.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "Product Name Cannot Be Empty.");
+
+            return null;
+        }
+
+        List<Product> products =
+                productDAO.findAllProducts()
+                        .stream()
+                        .filter(product ->
+                                product.getProductName()
+                                        .toLowerCase()
+                                        .contains(
+                                                keyword.toLowerCase()))
+                        .toList();
+
+        if (products.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "Product Not Found.");
+
+            return null;
+        }
+
+        displayProducts(
+                products,
+                "SEARCH RESULT");
+
+        String productId =
+                InputUtil.readString(
+                                "Enter Product ID : ")
+                        .trim()
+                        .toUpperCase();
+
+        Product product =
+                products.stream()
+                        .filter(currentProduct ->
+                                currentProduct.getProductId()
+                                        .equalsIgnoreCase(
+                                                productId))
+                        .findFirst()
+                        .orElse(null);
+
+        if (product == null) {
+
+            DisplayUtil.printMessage(
+                    "Invalid Product ID.");
+
+            return null;
+        }
+
+        return product;
     }
 
 }

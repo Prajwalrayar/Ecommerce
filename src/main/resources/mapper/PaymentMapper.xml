@@ -473,6 +473,25 @@
 
     </select>
 
+    <select id="findPaymentsByStatus"
+            resultMap="PaymentResultMap">
+
+        SELECT
+        p.*,
+        c.*,
+        o.*
+        FROM payments p
+
+        LEFT JOIN customers c
+        ON p.customer_id = c.user_id
+
+        LEFT JOIN orders o
+        ON p.order_id = o.order_id
+
+        WHERE p.payment_status = #{paymentStatus}
+
+    </select>
+
     <select id="findPaymentsByCustomerAndKeyword"
             resultMap="PaymentResultMap">
 

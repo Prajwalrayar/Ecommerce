@@ -83,52 +83,57 @@ public class InventoryService {
     public void addStock(Seller seller) {
 
         if (!validateProductsAvailable()) {
-
             return;
-
         }
 
-        DisplayUtil.printTable(
+        List<Product> products =
+                productDAO.findProductsBySeller(
+                        seller.getUserId());
 
+        DisplayUtil.printTable(
                 "MY PRODUCTS",
 
                 new String[]{
-
                         "Product ID",
                         "Product Name",
                         "Category",
                         "Price (₹)",
+                        "Stock",
                         "Status"
-
                 },
 
-                productDAO.findProductsBySeller(
-                                seller.getUserId())
-                        .stream()
-                        .map(product -> new String[]{
+                products.stream()
+                        .map(product -> {
 
-                                product.getProductId(),
+                            Inventory inventory =
+                                    inventoryDAO.findInventoryByProduct(
+                                            product.getProductId());
 
-                                product.getProductName(),
+                            String quantity =
+                                    inventory == null
+                                            ? "0"
+                                            : String.valueOf(
+                                            inventory.getQuantity());
 
-                                product.getCategory()
-                                        .getCategoryName(),
-
-                                String.format(
-                                        "%.2f",
-                                        product.getProductPrice()),
-
-                                product.getProductStatus()
-                                        .name()
+                            return new String[]{
+                                    product.getProductId(),
+                                    product.getProductName(),
+                                    product.getCategory()
+                                            .getCategoryName(),
+                                    String.format(
+                                            "%.2f",
+                                            product.getProductPrice()),
+                                    quantity,
+                                    product.getProductStatus()
+                                            .name()
+                            };
 
                         })
                         .toList()
-
         );
 
         addStockToProduct(
                 getSellerProductOrNull(seller));
-
     }
 
     /**
@@ -208,6 +213,40 @@ public class InventoryService {
 
         );
 
+    }
+
+    public void updateInventory(
+            Inventory inventory,
+            int quantity) {
+
+        if (inventory == null) {
+            return;
+        }
+
+        inventory.setQuantity(
+                inventory.getQuantity() + quantity);
+
+        if (inventory.getQuantity() < 0) {
+            inventory.setQuantity(0);
+        }
+
+        inventoryDAO.updateQuantity(inventory);
+
+        Product product =
+                inventory.getProduct();
+
+        if (inventory.getQuantity() == 0) {
+
+            product.setProductStatus(
+                    ProductStatus.OUT_OF_STOCK);
+
+        } else {
+
+            product.setProductStatus(
+                    ProductStatus.AVAILABLE);
+        }
+
+        productDAO.updateProductStatus(product);
     }
 
     /**

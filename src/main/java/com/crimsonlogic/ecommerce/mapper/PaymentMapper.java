@@ -1,5 +1,6 @@
 package com.crimsonlogic.ecommerce.mapper;
 
+import com.crimsonlogic.ecommerce.enums.PaymentStatus;
 import com.crimsonlogic.ecommerce.model.Payment;
 import org.apache.ibatis.annotations.Param;
 
@@ -95,6 +96,9 @@ public interface PaymentMapper {
             String keyword
 
     );
+
+    List<Payment> findPaymentsByStatus(
+            @Param("paymentStatus") PaymentStatus paymentStatus);
 
     List<Payment> findPaymentsByKeyword(
 

@@ -138,6 +138,16 @@
 
     </update>
 
+    <update id="updatePassword">
+
+        UPDATE sellers
+
+        SET user_password = #{userPassword}
+
+        WHERE user_id = #{userId}
+
+    </update>
+
     <!-- ===================================================== -->
     <!-- Delete -->
     <!-- ===================================================== -->
