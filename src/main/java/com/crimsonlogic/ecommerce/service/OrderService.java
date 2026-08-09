@@ -12,7 +12,9 @@ import com.crimsonlogic.ecommerce.util.IdGenerator;
 import com.crimsonlogic.ecommerce.util.InputUtil;
 import com.crimsonlogic.ecommerce.util.ValidationUtil;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -1171,6 +1173,140 @@ public class OrderService {
 
     }
 
+    public void returnOrder(Customer customer) {
+
+        List<Order> orders =
+                orderDAO.findOrdersByCustomer(
+                        customer.getUserId());
+
+        List<Order> deliveredOrders =
+                orders.stream()
+                        .filter(order ->
+                                order.getOrderStatus()
+                                        == OrderStatus.DELIVERED)
+                        .toList();
+
+        if (deliveredOrders.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Delivered Orders Available For Return.");
+
+            return;
+        }
+
+        DisplayUtil.printTable(
+                "DELIVERABLE ORDERS",
+                new String[]{
+                        "Tracking No",
+                        "Product",
+                        "Quantity",
+                        "Amount",
+                        "Status"
+                },
+                buildReturnOrderRows(
+                        deliveredOrders));
+
+        String trackingNumber =
+                InputUtil.readString(
+                                "Enter Tracking Number : ")
+                        .trim()
+                        .toUpperCase();
+
+        Order order =
+                deliveredOrders.stream()
+                        .filter(currentOrder ->
+                                currentOrder
+                                        .getOrderId()
+                                        .equalsIgnoreCase(
+                                                trackingNumber))
+                        .findFirst()
+                        .orElse(null);
+
+        if (order == null) {
+
+            DisplayUtil.printMessage(
+                    "Delivered Order Not Found.");
+
+            return;
+        }
+
+        if (order.getDeliveredDate() == null) {
+
+            DisplayUtil.printMessage(
+                    "Delivery Date Not Available.");
+
+            return;
+        }
+
+        long daysSinceDelivery =
+                ChronoUnit.DAYS.between(
+                        order.getDeliveredDate()
+                                .toLocalDate(),
+                        LocalDate.now());
+
+        if (daysSinceDelivery > 7) {
+
+            DisplayUtil.printMessage(
+                    "Return Period Expired.");
+
+            DisplayUtil.printMessage(
+                    "Product can only be returned within 7 days of delivery.");
+
+            return;
+        }
+
+        Payment payment =
+                getPaymentByOrder(order);
+
+        if (payment == null) {
+
+            DisplayUtil.printMessage(
+                    "Payment Details Not Found.");
+
+            return;
+        }
+
+        if (payment.getPaymentStatus()
+                == PaymentStatus.REFUND_IN_PROGRESS) {
+
+            DisplayUtil.printMessage(
+                    "Return Already Requested.");
+
+            DisplayUtil.printMessage(
+                    "Refund is currently in progress.");
+
+            return;
+        }
+
+        if (payment.getPaymentStatus()
+                == PaymentStatus.REFUNDED) {
+
+            DisplayUtil.printMessage(
+                    "This Order Has Already Been Refunded.");
+
+            return;
+        }
+
+        order.setOrderStatus(
+                OrderStatus.RETURN_REQUESTED);
+
+        orderDAO.updateOrderStatus(order);
+
+        payment.setPaymentStatus(
+                PaymentStatus.REFUND_IN_PROGRESS);
+
+        paymentDAO.updatePaymentStatus(payment);
+
+        DisplayUtil.printSuccess(
+                "Return Request Submitted Successfully.");
+
+        DisplayUtil.printMessage(
+                "Refund is in progress.");
+
+        DisplayUtil.printMessage(
+                "Amount will be refunded to your wallet after admin approval.");
+    }
+
     // Returns Customer Cart.
     private Cart getCustomerCartOrNull(Customer customer) {
 
@@ -1675,6 +1811,30 @@ public class OrderService {
                                 payment.getAmount()),
 
                         payment.getPaymentStatus()
+                                .name()
+
+                })
+                .toList();
+    }
+    private List<String[]> buildReturnOrderRows(
+            List<Order> orders) {
+
+        return orders.stream()
+                .map(order -> new String[]{
+
+                        order.getOrderId(),
+
+                        order.getProduct()
+                                .getProductName(),
+
+                        String.valueOf(
+                                order.getQuantity()),
+
+                        String.format(
+                                "%.2f",
+                                order.getTotalPrice()),
+
+                        order.getOrderStatus()
                                 .name()
 
                 })

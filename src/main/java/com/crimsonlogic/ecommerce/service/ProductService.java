@@ -505,23 +505,24 @@ public class ProductService {
             List<Product> products) {
 
         return products.stream()
-
                 .map(product -> {
 
                     Inventory inventory =
                             inventoryDAO.findInventoryByProduct(
                                     product.getProductId());
 
-                    String stock = inventory == null
-                            ? "0"
-                            : String.valueOf(
-                            inventory.getQuantity());
+                    String stock =
+                            inventory == null
+                                    ? "0"
+                                    : String.valueOf(
+                                    inventory.getQuantity());
 
                     return new String[]{
 
                             product.getProductId(),
 
                             product.getProductName(),
+
                             product.getBrand(),
 
                             product.getCategory()
@@ -535,6 +536,7 @@ public class ProductService {
 
                             product.getSeller()
                                     .getShopName(),
+
                             String.format(
                                     "%.1f (%d)",
                                     product.getRating(),
@@ -542,13 +544,10 @@ public class ProductService {
 
                             product.getProductStatus()
                                     .name()
-
                     };
 
                 })
-
                 .toList();
-
     }
     /**
      * Returns Category if found.

@@ -16,6 +16,7 @@ public enum OrderStatus {
     OUT_FOR_DELIVERY,
 
     DELIVERED,
+    RETURN_REQUESTED,
 
     CANCELLED,
 

@@ -39,27 +39,32 @@ public class OrderMenuHandler {
 
             switch (choice) {
 
-                case "place":
+                case "place order":
 
                     orderService.placeOrder(customer);
 
                     break;
 
-                case "view":
+                case "view order":
 
                     orderService.viewOrders(customer);
 
                     break;
 
-                case "search":
+                case "search order":
 
                     orderService.searchOrder(customer);
 
                     break;
 
-                case "cancel":
+                case "cancel order":
 
                     orderService.cancelOrder(customer);
+
+                    break;
+                case "return":
+
+                    orderService.returnOrder(customer);
 
                     break;
 
@@ -147,8 +152,8 @@ public class OrderMenuHandler {
             System.out.println();
             System.out.println("ORDER APPROVAL");
             System.out.println("==========================================");
-            System.out.println("CONFIRM");
-            System.out.println("CANCEL");
+            System.out.println("CONFIRM Order");
+            System.out.println("CANCEL Order");
             System.out.println("BACK");
 
             String choice = InputUtil.readString("Enter Choice : ")
@@ -156,13 +161,13 @@ public class OrderMenuHandler {
 
             switch (choice) {
 
-                case "confirm":
+                case "confirm order":
 
                     orderService.confirmOrder(seller);
 
                     break;
 
-                case "cancel":
+                case "cancel order":
 
                     orderService.cancelSellerOrder(seller);
 
@@ -188,10 +193,11 @@ public class OrderMenuHandler {
 
         System.out.println("ORDER MENU");
         System.out.println("------------------------------------");
-        System.out.println("PLACE");
-        System.out.println("VIEW");
-        System.out.println("SEARCH");
-        System.out.println("CANCEL");
+        System.out.println("PLACE Order");
+        System.out.println("VIEW Order");
+        System.out.println("SEARCH Orders");
+        System.out.println("CANCEL Order");
+        System.out.println("RETURN Order");
         System.out.println("BACK");
 
         System.out.println("==========================================");
