@@ -464,7 +464,7 @@ public class InventoryService {
      * @param includeSeller Include Seller Column
      */
     private void displayInventories(List<Inventory> inventories,
-            String title, boolean includeSeller) {
+                                    String title, boolean includeSeller) {
 
         if (inventories.isEmpty()) {
 

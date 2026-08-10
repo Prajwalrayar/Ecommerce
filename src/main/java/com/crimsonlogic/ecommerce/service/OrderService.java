@@ -541,7 +541,7 @@ public class OrderService {
      * @param title Table Title
      */
     private void displayCustomerOrders(List<Order> orders,
-            String title) {
+                                       String title) {
 
         if (orders.isEmpty()) {
 
@@ -1191,10 +1191,7 @@ public class OrderService {
                         .toList();
 
         if (deliveredOrders.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Delivered Orders Available For Return.");
-
+            DisplayUtil.printMessage("No Delivered Orders Available For Return.");
             return;
         }
 
@@ -1210,8 +1207,7 @@ public class OrderService {
                 buildReturnOrderRows(deliveredOrders));
 
         String trackingNumber =
-                InputUtil.readString(
-                                "Enter Tracking Number : ")
+                InputUtil.readString("Enter Tracking Number : ")
                         .trim()
                         .toUpperCase();
 
@@ -1219,24 +1215,17 @@ public class OrderService {
                 deliveredOrders.stream()
                         .filter(currentOrder ->
                                 currentOrder.getOrderId()
-                                        .equalsIgnoreCase(
-                                                trackingNumber))
+                                        .equalsIgnoreCase(trackingNumber))
                         .findFirst()
                         .orElse(null);
 
         if (order == null) {
-
-            DisplayUtil.printMessage(
-                    "Delivered Order Not Found.");
-
+            DisplayUtil.printMessage("Delivered Order Not Found.");
             return;
         }
 
         if (order.getDeliveredDate() == null) {
-
-            DisplayUtil.printMessage(
-                    "Delivery Date Not Available.");
-
+            DisplayUtil.printMessage("Delivery Date Not Available.");
             return;
         }
 
@@ -1246,73 +1235,46 @@ public class OrderService {
                         LocalDate.now());
 
         if (daysSinceDelivery > 7) {
-
-            DisplayUtil.printMessage(
-                    "Return Period Expired.");
-
-            DisplayUtil.printMessage(
-                    "Product can only be returned within 7 days of delivery.");
-
+            DisplayUtil.printMessage("Return Period Expired.");
+            DisplayUtil.printMessage("Product can only be returned within 7 days of delivery.");
             return;
         }
 
-        Payment payment =
-                getPaymentByOrder(order);
+        Payment payment = getPaymentByOrder(order);
 
         if (payment == null) {
-
-            DisplayUtil.printMessage(
-                    "Payment Details Not Found.");
-
+            DisplayUtil.printMessage("Payment Details Not Found.");
             return;
         }
 
-        if (payment.getPaymentStatus()
-                == PaymentStatus.REFUND_IN_PROGRESS) {
-
-            DisplayUtil.printMessage(
-                    "Return Already Requested.");
-
-            DisplayUtil.printMessage(
-                    "Refund is currently in progress.");
-
+        if (payment.getPaymentStatus() == PaymentStatus.REFUND_IN_PROGRESS) {
+            DisplayUtil.printMessage("Return Already Requested. Refund is currently in progress.");
             return;
         }
 
-        if (payment.getPaymentStatus()
-                == PaymentStatus.REFUNDED) {
-
-            DisplayUtil.printMessage(
-                    "This Order Has Already Been Refunded.");
-
+        if (payment.getPaymentStatus() == PaymentStatus.REFUNDED) {
+            DisplayUtil.printMessage("This Order Has Already Been Refunded.");
             return;
         }
 
-        /*
-         * Mark order as return requested.
-         */
-        order.setOrderStatus(
-                OrderStatus.RETURN_REQUESTED);
+        String reason = InputUtil.readString("Ask Return Reason : ").trim();
 
-        orderDAO.updateOrderStatus(order);
+        String confirm = InputUtil.readString("Customer confirms? YES / NO : ").trim();
 
-        /*
-         * Refund is NOT processed here.
-         * Admin will process the refund later.
-         */
-        payment.setPaymentStatus(
-                PaymentStatus.REFUND_IN_PROGRESS);
+        if (confirm.equalsIgnoreCase("YES") || confirm.equalsIgnoreCase("Y")) {
 
-        paymentDAO.updatePaymentStatus(payment);
+            order.setOrderStatus(OrderStatus.RETURN_REQUESTED);
+            orderDAO.updateOrderStatus(order);
 
-        DisplayUtil.printSuccess(
-                "Return Request Submitted Successfully.");
+            payment.setPaymentStatus(PaymentStatus.REFUND_IN_PROGRESS);
+            paymentDAO.updatePaymentStatus(payment);
 
-        DisplayUtil.printMessage(
-                "Refund is in progress.");
-
-        DisplayUtil.printMessage(
-                "Amount will be refunded to your wallet after admin approval.");
+            DisplayUtil.printSuccess("Return Request Submitted Successfully.");
+            DisplayUtil.printMessage("Refund is in progress.");
+            DisplayUtil.printMessage("Amount will be refunded to your wallet after admin approval.");
+        } else {
+            DisplayUtil.printMessage("Return cancelled.");
+        }
     }
 
     // Returns Customer Cart.
@@ -1367,7 +1329,7 @@ public class OrderService {
             ValidationUtil.validateTrackingNumber(trackingNumber);
 
             Order order = orderDAO.findOrderByIdAndCustomer(
-                            trackingNumber, customer.getUserId());
+                    trackingNumber, customer.getUserId());
 
             if (order == null) {
                 DisplayUtil.printMessage("Order Not Found.");
@@ -1618,7 +1580,7 @@ public class OrderService {
     }
 
     private PaymentStatus processWalletPayment(Customer customer,
-            double amount) {
+                                               double amount) {
 
         while (true) {
 

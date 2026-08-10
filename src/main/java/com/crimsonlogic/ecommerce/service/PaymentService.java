@@ -242,7 +242,7 @@ public class PaymentService {
      * Card Payment.
      */
     private void cardPayment(Customer customer, Order order,
-            PaymentMethod paymentMethod) {
+                             PaymentMethod paymentMethod) {
 
         String cardNumber =
                 InputUtil.readString(
@@ -358,7 +358,7 @@ public class PaymentService {
      * @param upiId UPI ID
      */
     private void createPayment(Customer customer, Order order,
-            PaymentMethod paymentMethod, PaymentStatus paymentStatus, String upiId) {
+                               PaymentMethod paymentMethod, PaymentStatus paymentStatus, String upiId) {
 
         Payment payment = new Payment(IdGenerator.generateId("PAY"),
                 generateUtrNumber(), customer, order, paymentMethod,
@@ -440,13 +440,10 @@ public class PaymentService {
     public void refundPayment() {
 
         if (!validatePayments()) {
-
             return;
         }
 
-        /*
-         * Display refund requests only.
-         */
+        // Display refund requests only
         List<Payment> refundPayments =
                 paymentDAO.findAllPayments()
                         .stream()
@@ -456,136 +453,72 @@ public class PaymentService {
                         .toList();
 
         if (refundPayments.isEmpty()) {
-
-            DisplayUtil.printMessage(
-                    "No Refund Requests Found.");
-
+            DisplayUtil.printMessage("No Refund Requests Found.");
             return;
         }
 
-        /*
-         * Display pending refund requests.
-         */
-        DisplayUtil.printTable(
-                "REFUND REQUESTS",
-                new String[]{
-                        "Tracking No",
-                        "Customer",
-                        "Product",
-                        "Amount",
-                        "Payment Status"
-                },
-                buildRefundPaymentRows(
-                        refundPayments));
-
-        /*
-         * Ask for Tracking Number.
-         */
+        // Ask for Tracking Number
         String trackingNumber =
-                InputUtil.readString(
-                                "Enter Tracking Number : ")
+                InputUtil.readString("Enter Tracking Number : ")
                         .trim()
                         .toUpperCase();
 
-        /*
-         * Find payment using Order / Tracking Number.
-         */
+        // Find payment using Order / Tracking Number
         Payment payment =
                 refundPayments.stream()
                         .filter(currentPayment ->
-                                currentPayment.getOrder()
-                                        != null
-                                        &&
-                                        currentPayment.getOrder()
-                                                .getOrderId()
-                                                .equalsIgnoreCase(
-                                                        trackingNumber))
+                                currentPayment.getOrder() != null &&
+                                        currentPayment.getOrder().getOrderId().equalsIgnoreCase(trackingNumber))
                         .findFirst()
                         .orElse(null);
 
         if (payment == null) {
-
-            DisplayUtil.printMessage(
-                    "Refund Request Not Found.");
-
+            DisplayUtil.printMessage("Refund Request Not Found.");
             return;
         }
 
-        /*
-         * Verify payment is still pending refund.
-         */
-        if (payment.getPaymentStatus()
-                != PaymentStatus.REFUND_IN_PROGRESS) {
-
-            DisplayUtil.printMessage(
-                    "This Payment Is Not Pending Refund.");
-
-            return;
-        }
-
-        /*
-         * Get Customer.
-         */
-        Customer customer =
-                payment.getCustomer();
+        Customer customer = payment.getCustomer();
 
         if (customer == null) {
-
-            DisplayUtil.printMessage(
-                    "Customer Details Not Found.");
-
+            DisplayUtil.printMessage("Customer Details Not Found.");
             return;
         }
 
-        /*
-         * Get refund amount.
-         */
-        double refundAmount =
-                payment.getAmount();
+        System.out.println("\nREFUND REQUEST");
+        System.out.println("--------------------------------");
+        System.out.println("Tracking No : " + payment.getOrder().getOrderId());
+        System.out.println("Customer    : " + customer.getUserName());
+        System.out.println("Product     : " + payment.getOrder().getProduct().getProductName());
+        System.out.println("Amount      : ₹" + String.format("%.2f", payment.getAmount()));
+        System.out.println("Status      : " + payment.getPaymentStatus().name());
+        System.out.println("--------------------------------\n");
 
-        /*
-         * Credit refund to Customer Wallet.
-         *
-         * This applies to ALL payment methods.
-         */
-        double currentWalletBalance =
-                customer.getWalletBalance();
+        String confirm = InputUtil.readString("Process Refund? (yes/no) : ").trim();
 
-        double newWalletBalance =
-                currentWalletBalance
-                        + refundAmount;
+        if (confirm.equalsIgnoreCase("yes") || confirm.equalsIgnoreCase("y")) {
 
-        customerDAO.updateWalletBalance(
-                customer.getUserId(),
-                newWalletBalance);
+            String utr = InputUtil.readString("Enter Refund Reference/UTR : ").trim();
 
-        /*
-         * Mark payment as refunded.
-         */
-        payment.setPaymentStatus(
-                PaymentStatus.REFUNDED);
+            double refundAmount = payment.getAmount();
+            double newWalletBalance = customer.getWalletBalance() + refundAmount;
 
-        paymentDAO.updatePaymentStatus(
-                payment);
+            customer.setWalletBalance(newWalletBalance);
+            customerDAO.updateWalletBalance(customer.getUserId(), newWalletBalance);
 
-        DisplayUtil.printSuccess(
-                "Refund Processed Successfully.");
+            payment.setTransactionId(utr);
+            payment.setPaymentStatus(PaymentStatus.REFUNDED);
+            paymentDAO.updatePayment(payment);
 
-        DisplayUtil.printSuccess(
-                "₹"
-                        + String.format(
-                        "%.2f",
-                        refundAmount)
-                        + " Credited To Customer Wallet.");
+            Order order = payment.getOrder();
+            order.setOrderStatus(OrderStatus.CANCELLED);
+            orderDAO.updateOrderStatus(order);
 
-        DisplayUtil.printMessage(
-                "Refund Status : REFUNDED");
+            DisplayUtil.printSuccess("Refund Processed Successfully.");
+            DisplayUtil.printSuccess("₹" + String.format("%.2f", refundAmount) + " Credited To Customer Wallet.");
 
-        DisplayUtil.printMessage(
-                "Customer Wallet Balance : ₹"
-                        + String.format(
-                        "%.2f",
-                        newWalletBalance));
+        } else {
+            DisplayUtil.printMessage("Refund process cancelled.");
+        }
     }
 
     // Checks whether Customer has Payments.
@@ -602,7 +535,7 @@ public class PaymentService {
     private Order getPendingOrder(Customer customer) {
 
         List<Order> orders = orderDAO.findOrdersWithoutPayment(
-                        customer.getUserId());
+                customer.getUserId());
 
         if (orders.isEmpty()) {
 
@@ -943,7 +876,7 @@ public class PaymentService {
      * @param title Table Title
      */
     private void displayCustomerPayments(List<Payment> payments,
-            String title) {
+                                         String title) {
 
         if (payments.isEmpty()) {
 

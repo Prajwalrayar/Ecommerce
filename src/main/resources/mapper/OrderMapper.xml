@@ -84,7 +84,9 @@
 
         order_status,
 
-        order_date
+        order_date,
+
+        delivered_date
 
         )
 
@@ -102,7 +104,9 @@
 
         #{orderStatus},
 
-        #{orderDate}
+        #{orderDate},
+
+        #{deliveredDate}
 
         )
 
