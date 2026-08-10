@@ -1080,12 +1080,16 @@ public class OrderService {
         Customer customer =
                 payment.getCustomer();
 
-        customer.setWalletBalance(
+        double newWalletBalance =
                 customer.getWalletBalance()
-                        + payment.getAmount());
+                        + payment.getAmount();
+
+        customer.setWalletBalance(
+                newWalletBalance);
 
         customerDAO.updateWalletBalance(
-                customer);
+                customer.getUserId(),
+                newWalletBalance);
 
         payment.setPaymentStatus(
                 PaymentStatus.REFUNDED);
@@ -1203,8 +1207,7 @@ public class OrderService {
                         "Amount",
                         "Status"
                 },
-                buildReturnOrderRows(
-                        deliveredOrders));
+                buildReturnOrderRows(deliveredOrders));
 
         String trackingNumber =
                 InputUtil.readString(
@@ -1215,8 +1218,7 @@ public class OrderService {
         Order order =
                 deliveredOrders.stream()
                         .filter(currentOrder ->
-                                currentOrder
-                                        .getOrderId()
+                                currentOrder.getOrderId()
                                         .equalsIgnoreCase(
                                                 trackingNumber))
                         .findFirst()
@@ -1240,8 +1242,7 @@ public class OrderService {
 
         long daysSinceDelivery =
                 ChronoUnit.DAYS.between(
-                        order.getDeliveredDate()
-                                .toLocalDate(),
+                        order.getDeliveredDate().toLocalDate(),
                         LocalDate.now());
 
         if (daysSinceDelivery > 7) {
@@ -1287,11 +1288,18 @@ public class OrderService {
             return;
         }
 
+        /*
+         * Mark order as return requested.
+         */
         order.setOrderStatus(
                 OrderStatus.RETURN_REQUESTED);
 
         orderDAO.updateOrderStatus(order);
 
+        /*
+         * Refund is NOT processed here.
+         * Admin will process the refund later.
+         */
         payment.setPaymentStatus(
                 PaymentStatus.REFUND_IN_PROGRESS);
 
@@ -1575,10 +1583,15 @@ public class OrderService {
             Customer customer,
             double amount) {
 
-        customer.setWalletBalance(
-                customer.getWalletBalance() - amount);
+        double newWalletBalance =
+                customer.getWalletBalance() - amount;
 
-        customerDAO.updateWalletBalance(customer);
+        customer.setWalletBalance(
+                newWalletBalance);
+
+        customerDAO.updateWalletBalance(
+                customer.getUserId(),
+                newWalletBalance);
     }
 
     private String readUpiId() {
@@ -1775,14 +1788,16 @@ public class OrderService {
 
         }
 
-        customer.setWalletBalance(
-
+        double newWalletBalance =
                 customer.getWalletBalance()
-                        + recharge
+                        + recharge;
 
-        );
+        customer.setWalletBalance(
+                newWalletBalance);
 
-        customerDAO.updateWalletBalance(customer);
+        customerDAO.updateWalletBalance(
+                customer.getUserId(),
+                newWalletBalance);
 
         DisplayUtil.printSuccess(
 

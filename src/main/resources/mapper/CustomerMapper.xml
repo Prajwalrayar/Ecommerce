@@ -147,11 +147,9 @@
 
         UPDATE customers
 
-        SET
+        SET wallet_balance = #{walletBalance}
 
-        wallet_balance = #{walletBalance}
-
-        WHERE user_id = #{userId}
+        WHERE user_id = #{customerId}
 
     </update>
 
