@@ -223,7 +223,7 @@ public class AdminMenuHandler {
                     break;
 
                 case "refund":
-
+                    // Safely triggers the newly integrated refund logic
                     paymentService.refundPayment();
 
                     break;
