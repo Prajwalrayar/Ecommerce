@@ -66,22 +66,27 @@ public class CustomerDAO {
     }
 
     /**
-     * Updates Wallet Balance.
+     * Updates Customer Wallet Balance.
      *
-     * @param customer Customer
+     * @param customerId Customer ID
+     * @param walletBalance New Wallet Balance
      */
-    public void updateWalletBalance(Customer customer) {
+    public void updateWalletBalance(
+            String customerId,
+            double walletBalance) {
 
-        try (SqlSession session = MyBatisUtil.getFactory().openSession()) {
+        try (SqlSession session =
+                     MyBatisUtil.getFactory().openSession()) {
 
-            CustomerMapper mapper = session.getMapper(CustomerMapper.class);
+            CustomerMapper mapper =
+                    session.getMapper(CustomerMapper.class);
 
-            mapper.updateWalletBalance(customer);
+            mapper.updateWalletBalance(
+                    customerId,
+                    walletBalance);
 
             session.commit();
-
         }
-
     }
 
     /**

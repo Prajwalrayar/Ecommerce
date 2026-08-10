@@ -137,10 +137,13 @@
         UPDATE orders
 
         SET
+        order_status = #{orderStatus}
 
-        order_status=#{orderStatus}
+        <if test="deliveredDate != null">
+            , delivered_date = #{deliveredDate}
+        </if>
 
-        WHERE order_id=#{orderId}
+        WHERE order_id = #{orderId}
 
     </update>
 

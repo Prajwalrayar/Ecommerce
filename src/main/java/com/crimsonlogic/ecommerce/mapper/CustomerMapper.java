@@ -63,11 +63,13 @@ public interface CustomerMapper {
      */
     List<Customer> findAllCustomers();
 
-    /**
-     * Updates Customer Wallet Balance.
-     *
-     * @param customer Customer
-     */
-    void updateWalletBalance(Customer customer);
+    // Updates Customer Wallet Balance.
+
+    void updateWalletBalance(
+            @Param("customerId")
+            String customerId,
+
+            @Param("walletBalance")
+            double walletBalance);
 
 }

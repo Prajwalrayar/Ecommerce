@@ -194,7 +194,7 @@ public class AdminMenuHandler {
         while (!back) {
 
             System.out.println("\n==========================================");
-            System.out.println("            PAYMENT MENU");
+            System.out.println("             PAYMENT MENU");
             System.out.println("==========================================");
             System.out.println("VIEW");
             System.out.println("SEARCH");
@@ -238,12 +238,9 @@ public class AdminMenuHandler {
 
                     DisplayUtil.printInvalidChoice();
 
-                    back = true;
-
+                    break;
             }
-
         }
-
     }
 
 }

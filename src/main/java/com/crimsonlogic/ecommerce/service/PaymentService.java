@@ -435,102 +435,157 @@ public class PaymentService {
     }
 
     /**
-     * Returns Payment using UTR Number.
-     *
-     * @return Payment
-     */
-    private Payment getPaymentOrNull() {
-
-        if (!validatePayments()) {
-
-            return null;
-
-        }
-
-        String transactionId =
-                InputUtil.readString(
-                                "Enter UTR Number : ")
-                        .trim();
-
-        Payment payment =
-                paymentDAO.findPaymentByUtr(
-                        transactionId);
-
-        if (payment == null) {
-
-            DisplayUtil.printMessage(
-                    "Payment Not Found.");
-
-        }
-
-        return payment;
-
-    }
-
-    /**
      * Refunds Payment.
      */
     public void refundPayment() {
 
+        if (!validatePayments()) {
+
+            return;
+        }
+
+        /*
+         * Display refund requests only.
+         */
+        List<Payment> refundPayments =
+                paymentDAO.findAllPayments()
+                        .stream()
+                        .filter(payment ->
+                                payment.getPaymentStatus()
+                                        == PaymentStatus.REFUND_IN_PROGRESS)
+                        .toList();
+
+        if (refundPayments.isEmpty()) {
+
+            DisplayUtil.printMessage(
+                    "No Refund Requests Found.");
+
+            return;
+        }
+
+        /*
+         * Display pending refund requests.
+         */
+        DisplayUtil.printTable(
+                "REFUND REQUESTS",
+                new String[]{
+                        "Tracking No",
+                        "Customer",
+                        "Product",
+                        "Amount",
+                        "Payment Status"
+                },
+                buildRefundPaymentRows(
+                        refundPayments));
+
+        /*
+         * Ask for Tracking Number.
+         */
+        String trackingNumber =
+                InputUtil.readString(
+                                "Enter Tracking Number : ")
+                        .trim()
+                        .toUpperCase();
+
+        /*
+         * Find payment using Order / Tracking Number.
+         */
         Payment payment =
-                getPaymentOrNull();
+                refundPayments.stream()
+                        .filter(currentPayment ->
+                                currentPayment.getOrder()
+                                        != null
+                                        &&
+                                        currentPayment.getOrder()
+                                                .getOrderId()
+                                                .equalsIgnoreCase(
+                                                        trackingNumber))
+                        .findFirst()
+                        .orElse(null);
 
         if (payment == null) {
 
-            return;
-
-        }
-
-        if (payment.getOrder()
-                .getOrderStatus()
-                != OrderStatus.DELIVERED) {
-
             DisplayUtil.printMessage(
-                    "Refund Allowed Only For Delivered Orders.");
+                    "Refund Request Not Found.");
 
             return;
-
         }
 
+        /*
+         * Verify payment is still pending refund.
+         */
         if (payment.getPaymentStatus()
-                == PaymentStatus.REFUNDED) {
+                != PaymentStatus.REFUND_IN_PROGRESS) {
 
             DisplayUtil.printMessage(
-                    "Payment Already Refunded.");
+                    "This Payment Is Not Pending Refund.");
 
             return;
-
         }
 
+        /*
+         * Get Customer.
+         */
+        Customer customer =
+                payment.getCustomer();
+
+        if (customer == null) {
+
+            DisplayUtil.printMessage(
+                    "Customer Details Not Found.");
+
+            return;
+        }
+
+        /*
+         * Get refund amount.
+         */
+        double refundAmount =
+                payment.getAmount();
+
+        /*
+         * Credit refund to Customer Wallet.
+         *
+         * This applies to ALL payment methods.
+         */
+        double currentWalletBalance =
+                customer.getWalletBalance();
+
+        double newWalletBalance =
+                currentWalletBalance
+                        + refundAmount;
+
+        customerDAO.updateWalletBalance(
+                customer.getUserId(),
+                newWalletBalance);
+
+        /*
+         * Mark payment as refunded.
+         */
         payment.setPaymentStatus(
                 PaymentStatus.REFUNDED);
 
         paymentDAO.updatePaymentStatus(
                 payment);
 
-        if (payment.getPaymentMethod()
-                == PaymentMethod.WALLET) {
-
-            Customer customer =
-                    payment.getCustomer();
-
-            customer.setWalletBalance(
-
-                    customer.getWalletBalance()
-
-                            + payment.getAmount());
-
-            customerDAO.updateCustomer(
-                    customer);
-
-            DisplayUtil.printSuccess(
-                    "Amount Credited To Wallet.");
-
-        }
+        DisplayUtil.printSuccess(
+                "Refund Processed Successfully.");
 
         DisplayUtil.printSuccess(
-                "Refund Successful.");
+                "₹"
+                        + String.format(
+                        "%.2f",
+                        refundAmount)
+                        + " Credited To Customer Wallet.");
 
+        DisplayUtil.printMessage(
+                "Refund Status : REFUNDED");
+
+        DisplayUtil.printMessage(
+                "Customer Wallet Balance : ₹"
+                        + String.format(
+                        "%.2f",
+                        newWalletBalance));
     }
 
     // Checks whether Customer has Payments.
@@ -1051,6 +1106,39 @@ public class PaymentService {
         System.out.println("CASH ON DELIVERY");
         System.out.println("==========================================");
 
+    }
+
+    /**
+     * Builds Refund Payment Rows.
+     *
+     * @param payments Refund Payments
+     * @return Table Rows
+     */
+    private List<String[]> buildRefundPaymentRows(
+            List<Payment> payments) {
+
+        return payments.stream()
+                .map(payment -> new String[]{
+
+                        payment.getOrder()
+                                .getOrderId(),
+
+                        payment.getCustomer()
+                                .getUserName(),
+
+                        payment.getOrder()
+                                .getProduct()
+                                .getProductName(),
+
+                        String.format(
+                                "%.2f",
+                                payment.getAmount()),
+
+                        payment.getPaymentStatus()
+                                .name()
+
+                })
+                .toList();
     }
 
 }
